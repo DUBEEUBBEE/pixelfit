@@ -56,7 +56,7 @@
 - [x] C2PA/JUMBF/Content Credentials 제거 옵션이 없다.
 - [x] 출처 자격 증명 영향과 보존 한계가 사용자에게 표시된다.
 - [ ] 실제 호스트에서 CSP, Referrer-Policy, nosniff, Permissions-Policy, frame 제한을 확인했다.
-- [ ] HTTPS, static MIME과 다운로드 동작을 확인했다.
+- [x] GitHub Pages HTTPS, static MIME과 실제 JPG 다운로드 동작을 확인했다.
 
 ## 접근성과 UI
 
@@ -76,7 +76,7 @@
 - [x] heading 구조와 규격 설명, 공식/관행 구분, 출처·확인일·면책이 보인다.
 - [x] visible FAQ와 FAQ structured data 내용이 일치한다.
 - [x] WebApplication/Breadcrumb structured data가 유효하다.
-- [ ] sitemap, robots, 404가 공개 URL에서 동작한다.
+- [x] sitemap, robots, 404가 공개 URL에서 동작한다.
 - [x] 가짜 리뷰·별점·사용량 또는 검색어 반복 문구가 없다.
 
 ## 자동 검증
@@ -90,7 +90,7 @@
 - [x] `pnpm test:e2e`
 - [x] `pnpm test:a11y`
 - [x] 모든 E2E에서 처리되지 않은 page error와 예상 밖 console error가 0건이다.
-- [ ] CI가 비밀키 없이 동일한 필수 검사를 통과한다.
+- [x] 비밀키 없는 GitHub CI에서 44개 단위 테스트와 Chromium/WebKit E2E 24/24가 통과한다.
 
 ## 성능·호환성
 
@@ -99,16 +99,17 @@
 - [ ] 모바일 대형 이미지 처리 후 새 작업을 시작할 수 있다.
 - [x] production build의 route/bundle 경고를 검토했다.
 - [ ] Lighthouse를 실행했다면 실제 결과와 환경을 STATUS에 기록했다. 실행하지 않았다면 `NOT_TESTED`다.
-- [ ] WebKit/Safari smoke를 실행했다. 실행하지 않았다면 `NOT_TESTED`로 명시했다.
+- [x] Playwright WebKit iPhone 13 smoke를 실행했다.
+- [ ] 실기기 Safari smoke를 실행했다. 실행하지 않아 `NOT_TESTED`로 명시했다.
 
 ## 배포
 
 - [x] GitHub project Pages용 `/pixelfit` base path와 실제 canonical URL로 static export를 생성했다.
 - [x] `.nojekyll`과 공식 GitHub Pages artifact/deploy workflow를 추가했다.
-- [ ] `out/`을 staging에 배포하고 루트·여섯 도구·정보 페이지·404를 확인했다.
+- [x] `out/`을 GitHub Pages에 배포하고 루트·여섯 도구·정보 페이지·404를 확인했다.
 - [x] 새로고침과 직접 URL 접근이 clean route에서 동작한다.
 - [ ] `_next` 자산 캐시와 HTML 갱신 정책이 적절하다.
-- [ ] 공개 배포 URL과 smoke 결과를 STATUS에 기록했다.
+- [x] 공개 배포 URL과 smoke 결과를 STATUS에 기록했다.
 - [x] THIRD_PARTY_NOTICES의 직접 의존성·모델·fixture 목록을 최종 package와 비교했다.
 - [x] 알려진 제한이 UI, README, STATUS에 일치하게 기록됐다.
 - [x] 중요한 TODO/FIXME가 남지 않았음을 검색했다.
@@ -117,10 +118,10 @@
 
 | 항목 | 값 |
 | --- | --- |
-| release candidate | `pixelfit-v1-local-rc1` |
-| commit/build identifier | commit 없음 / build `tia3ifxLMzc3A4gqmfv-O` |
-| 검사 일시 | 2026-07-22 05:07~05:17 KST |
-| 검사 환경 | macOS, Node 24.14.1, pnpm 11.9.0, Playwright Chromium 1.61.1 |
-| 공개 URL | 예정 `https://dubeeubbee.github.io/pixelfit/` / 배포 `NOT_TESTED` |
-| 최종 판정 | 로컬 release candidate 완료, 공개 호스트 검증 대기 |
+| release candidate | `pixelfit-v1-pages-1` |
+| commit/build identifier | commit `522cc79` / CI `29924220607` / Pages `29924220581` |
+| 검사 일시 | 2026-07-22 05:07~05:17 및 22:24~22:35 KST |
+| 검사 환경 | macOS + GitHub Actions Ubuntu, Node 22/24.14.1, pnpm 11.9.0, Playwright Chromium/WebKit 1.61.1 |
+| 공개 URL | `https://dubeeubbee.github.io/pixelfit/` — 배포·기능 smoke `PASS` |
+| 최종 판정 | GitHub Pages 공개 릴리스 완료 |
 | 승인자 | 자동 검사 + Codex 수동 QA |

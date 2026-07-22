@@ -2,13 +2,13 @@
 
 스냅샷: 2026-07-22 KST
 
-이 문서는 실행한 검사만 `PASS`로 기록하는 v1 사실 기록이다. 공개 호스트, WebKit, Lighthouse처럼 실행하지 않은 항목은 `NOT_TESTED`로 남긴다.
+이 문서는 실행한 검사만 `PASS`로 기록하는 v1 사실 기록이다. 실기기 Safari, Lighthouse처럼 실행하지 않은 항목은 `NOT_TESTED`로 남긴다.
 
 ## 현재 마일스톤
 
-M10 최종 QA와 출시 준비 — 로컬 release candidate 완료
+M10 최종 QA와 출시 준비 — GitHub Pages 공개 배포 완료
 
-출시 상태: **정적 배포 가능한 로컬 release candidate**. 공개 URL과 실제 호스트 설정 검증은 남아 있다.
+출시 상태: **GitHub Pages 공개 릴리스**. 운영 URL은 `https://dubeeubbee.github.io/pixelfit/`이다.
 
 ## 완료 항목
 
@@ -40,11 +40,13 @@ M10 최종 QA와 출시 준비 — 로컬 release candidate 완료
 | privacy network/storage | `PASS` | 처리 중 POST/PUT/PATCH 0, local/session/IndexedDB/Cache Storage 전후 동일 |
 | visual screenshot inspection | `PASS` | 1440×900, 768×1024, 390×844, 320×568 및 핵심 편집 상태를 직접 열어 확인 |
 | browser console | `PASS` | 수동 production preview 확인에서 error 0, warning 0; E2E도 예상 밖 console error 0 |
-| WebKit/Safari smoke | `NOT_TESTED` | Playwright 필수 matrix는 Chromium desktop/mobile로 한정 |
+| Playwright WebKit mobile | `PASS` | iPhone 13 WebKit 프로젝트 12/12; 전체 Chromium + WebKit 24/24 |
+| 실기기 Safari smoke | `NOT_TESTED` | 실제 Safari 수동·실기기 검사는 실행하지 않음 |
 | Lighthouse/performance | `NOT_TESTED` | 측정값을 생성하지 않음 |
-| GitHub-hosted CI/Pages run | `NOT_TESTED` | CI·Pages workflow는 추가했으나 아직 원격 Actions 실행 이력 없음 |
-| public deployment smoke | `NOT_TESTED` | 예정 URL은 `https://dubeeubbee.github.io/pixelfit/`, 아직 공개 배포 전 |
-| live security headers/HTTPS | `NOT_TESTED` | `vercel.json`과 `public/_headers`는 정적 검토했으나 실제 호스트 응답은 없음 |
+| GitHub-hosted CI/Pages run | `PASS` | commit `522cc79`; CI `29924220607`, Pages `29924220581` 성공 |
+| public deployment smoke | `PASS` | 공개 13개 경로 200; 홈→여권사진 업로드→413×531 JPG 생성·다운로드 완료 |
+| HTTPS/static MIME/download | `PASS` | GitHub Pages HTTPS에서 HTML·sitemap·robots·SVG 응답과 24,929-byte JPG 다운로드 확인 |
+| custom security headers | `HOST_LIMITATION` | GitHub Pages는 `vercel.json`·`_headers`를 해석하지 않아 프로젝트 정의 CSP 등은 적용 불가 |
 
 ## 도구별 확인 결과
 
@@ -64,8 +66,9 @@ M10 최종 QA와 출시 준비 — 로컬 release candidate 완료
 - Next 런타임이 자체 sessionStorage 값을 만들 수 있어 “저장소가 비어 있음” 가정 대신 업로드 전후 snapshot 동일성을 검사하도록 수정했다.
 - 개발 서버 HMR 로그가 production 결과와 섞이지 않도록 Playwright를 `next build` 후 `serve out`을 쓰는 production-like 경로로 변경했다.
 - 320px 편집 화면의 하단 주요 버튼이 좁게 세로 배치되던 문제를 2열 grid와 전체 폭 primary action으로 수정했다.
+- 첫 GitHub CI는 Chromium만 설치해 WebKit 모바일 12개가 실행 파일 없음으로 실패했다. workflow에 Chromium과 WebKit 설치를 모두 추가한 뒤 CI `29924220607`에서 24/24를 재확인했다.
 
-현재 남은 실패한 검사는 없다. 위의 `NOT_TESTED` 항목은 실패가 아니라 실행 증거가 없는 배포 후 검사다.
+현재 남은 실패한 검사는 없다. 위의 `NOT_TESTED` 항목은 실패가 아니라 실행 증거가 없는 검사다.
 
 ## 알려진 제한
 
@@ -79,9 +82,9 @@ M10 최종 QA와 출시 준비 — 로컬 release candidate 완료
 
 ## 마지막 검증 기록
 
-- 검사 시각: 2026-07-22 05:07~05:17 KST
-- 환경: macOS, Node.js 24.14.1, pnpm 11.9.0, Playwright 1.61.1, Chromium
-- build identifier: `tia3ifxLMzc3A4gqmfv-O`
+- 검사 시각: 2026-07-22 05:07~05:17 및 22:24~22:35 KST
+- 환경: macOS + GitHub Actions Ubuntu, Node.js 22/24.14.1, pnpm 11.9.0, Playwright 1.61.1, Chromium + WebKit
+- release source commit: `522cc79`
 - `pnpm check`: 종료 코드 0 — 14 test files / 44 tests, 14 static pages
 - 환경변수 없는 `pnpm build`: 종료 코드 0 — root-path static export 14 pages
 - `NEXT_PUBLIC_BASE_PATH=/pixelfit NEXT_PUBLIC_SITE_URL=https://dubeeubbee.github.io/pixelfit pnpm build`: 종료 코드 0 — Pages-path static export 14 pages, 잘못된 `/_next` 참조 0
@@ -90,6 +93,8 @@ M10 최종 QA와 출시 준비 — 로컬 release candidate 완료
 - `pnpm start --listen 4174` + `HEAD /passport-photo`: 정적 preview 200 OK
 - Playwright CLI visual QA: home, passport, YouTube, favicon, privacy editor의 desktop/mobile 상태 직접 확인; 마지막 console 0 errors / 0 warnings
 - `rg -n "TODO|FIXME" ...`: 제품·테스트·CI 코드에서 미해결 항목 0
-- 예정 공개 URL: `https://dubeeubbee.github.io/pixelfit/` — 원격 배포·smoke `NOT_TESTED`
+- GitHub-hosted CI `29924220607`: 14 test files / 44 tests, 14 static pages, Chromium + WebKit E2E 24/24, 종료 코드 0
+- GitHub Pages `29924220581`: build + deploy 성공, `https://dubeeubbee.github.io/pixelfit/`
+- 공개 smoke: 13개 경로 HTTP 200, 홈→여권사진 생성→24,929-byte 413×531 JPG 다운로드, console errors 0 / warnings 0
 
-다음 갱신은 GitHub Pages Actions 실행, 공개 URL smoke, HTTPS·응답 헤더, clean-route 새로고침, Lighthouse, 가능하면 WebKit smoke 결과를 기록한다.
+다음 갱신은 실기기 Safari, Lighthouse, 모바일 대형 이미지 회복력, 필요 시 사용자 지정 보안 헤더를 지원하는 호스트 결과를 기록한다.
