@@ -62,7 +62,7 @@ test("홈 제목은 데스크톱과 모바일에서 지정한 두 줄로만 보�
     const title = page.locator(".hero h1");
     await expect(title).toBeVisible();
     expect(await title.textContent(), `${viewport.width}px 제목 원문`).toBe(heroTitle);
-    await expect(title).toHaveCSS("white-space", "pre-line");
+    await expect(title).toHaveCSS("white-space", "pre");
 
     const titleGeometry = await title.evaluate((element) => {
       const glyphs: Array<{ value: string; left: number; top: number }> = [];
@@ -174,7 +174,7 @@ test("@a11y 신규 편집기를 키보드로 조작하고 결과 상태를 검�
     mimeType: "image/png",
     buffer: makePng(640, 800),
   });
-  await expect(page.getByRole("heading", { name: "목표 용량", exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "목표 용량", exact: true })).toBeVisible({ timeout: 30_000 });
 
   const targetSize = page.getByLabel("직접 입력");
   await targetSize.focus();

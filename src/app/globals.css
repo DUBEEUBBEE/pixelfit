@@ -58,7 +58,7 @@ button { color: inherit; }
 
 .hero { padding: clamp(4rem, 9vw, 8.5rem) 0 4.5rem; text-align: center; }
 .eyebrow { display: inline-flex; align-items: center; gap: .4rem; color: #0b6d57; background: #e2faf1; border: 1px solid #b8ecd8; border-radius: 999px; padding: .42rem .78rem; font-weight: 800; font-size: .82rem; letter-spacing: .01em; }
-.hero h1 { margin: 1.25rem auto .7rem; max-width: 850px; font-size: clamp(2.65rem, 7vw, 5.5rem); line-height: 1.03; letter-spacing: -.07em; white-space: pre-line; }
+.hero h1 { margin: 1.25rem auto .7rem; max-width: 850px; font-size: clamp(2.65rem, 7vw, 5.5rem); line-height: 1.03; letter-spacing: -.07em; white-space: pre; }
 .hero-lead { margin: 0 auto; font-size: clamp(1.12rem, 2vw, 1.4rem); color: var(--muted); }
 .privacy-pill { margin: 1.1rem auto 0; display: flex; width: fit-content; align-items: center; gap: .45rem; color: #40506b; font-weight: 650; font-size: .94rem; }
 .tool-search { position: relative; width: min(670px, 100%); margin: 2.3rem auto 0; }
@@ -272,7 +272,7 @@ button { color: inherit; }
   .nav-links::-webkit-scrollbar { display: none; }
   .nav-links a { display: block; flex: 0 0 auto; padding: .55rem .43rem; font-size: .78rem; white-space: nowrap; }
   .hero { padding-top: 3.3rem; }
-  .hero h1 { font-size: clamp(2.5rem, 14vw, 4rem); }
+  .hero h1 { font-size: clamp(2.5rem, 12vw, 4rem); }
   .tool-search input { height: 58px; }
   .tool-grid, .steps-grid, .footer-grid, .content-card-grid, .numbered-cards, .checklist-cards, .guide-link-grid { grid-template-columns: 1fr; }
   .tool-card { min-height: 235px; }

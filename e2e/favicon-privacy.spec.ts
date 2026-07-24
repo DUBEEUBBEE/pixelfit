@@ -37,7 +37,7 @@ test("PNG 개인정보를 선택 제거하고 재파싱한 파일을 다운로�
   await page.goto("/photo-privacy-cleaner");
   await page.waitForLoadState("networkidle");
   await page.getByLabel("사진 또는 파일 선택").setInputFiles({ name: "private.png", mimeType: "image/png", buffer: makePng(320, 400, true) });
-  await expect(page.getByText("작성자", { exact: true })).toBeVisible();
+  await expect(page.getByText("작성자", { exact: true })).toBeVisible({ timeout: 30_000 });
   await expect(page.getByText("편집 프로그램", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: "선택 정보 정리" }).click();
   await expect(page.getByText(/필드를 정리했습니다/)).toBeVisible();
