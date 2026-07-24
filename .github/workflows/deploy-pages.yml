@@ -40,10 +40,10 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Build project site
+      - name: Build custom domain root
         env:
-          NEXT_PUBLIC_BASE_PATH: /pixelfit
-          NEXT_PUBLIC_SITE_URL: https://dubeeubbee.github.io/pixelfit
+          NEXT_PUBLIC_BASE_PATH: ""
+          NEXT_PUBLIC_SITE_URL: https://pixelfit.o-r.kr
         run: pnpm build
 
       - name: Upload static export
