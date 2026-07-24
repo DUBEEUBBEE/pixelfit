@@ -1,11 +1,72 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
-import { presets } from "@/lib/presets";
-import { publicUrl } from "@/config/brand";
+import { ArrowRight, BookOpenCheck } from "lucide-react";
+import { brand, publicUrl } from "@/config/brand";
+import { guides } from "@/config/guides";
 
-export const metadata: Metadata = { title: "사진 규격 만들기 가이드", description: "사진 선택부터 자동 맞춤, 직접 조정, 검사와 다운로드까지 픽셀핏 사용 방법을 설명합니다.", alternates: { canonical: publicUrl("/guide") } };
+const title = "사진 크기·형식·개인정보 가이드";
+const description = "여권사진 픽셀, 500KB 압축, 증명사진 크기, DPI, YouTube 안전영역, 파비콘, EXIF와 이미지 형식을 실제 예시로 설명합니다.";
+const ogImage = "/og/guides/index.png";
+
+export const metadata: Metadata = {
+  title,
+  description,
+  alternates: { canonical: publicUrl("/guide") },
+  openGraph: {
+    type: "website",
+    locale: "ko_KR",
+    siteName: brand.name,
+    title,
+    description,
+    url: publicUrl("/guide"),
+    images: [{ url: publicUrl(ogImage), width: 1200, height: 630, alt: "픽셀핏 이미지 가이드 모음" }],
+  },
+  twitter: { card: "summary_large_image", title, description, images: [publicUrl(ogImage)] },
+  robots: { index: true, follow: true, googleBot: { index: true, follow: true, "max-image-preview": "large" } },
+};
 
 export default function GuidePage() {
-  return <div className="page-content site-shell"><article className="prose"><h1>사진 규격, 숫자 대신 용도로 시작하세요.</h1><p>픽셀핏은 범용 포토샵이 아닙니다. 만들 대상을 고르고 사진을 선택하면 그 규격의 크기·비율·형식을 적용합니다.</p><h2>1. 용도를 정확히 고르기</h2><p>공식 사진과 창작용 이미지는 허용되는 작업이 다릅니다. 특히 여권사진에서는 배경 제거, 합성, 얼굴 보정이 실행되지 않습니다.</p><h2>2. 원본이 좋은 사진 선택하기</h2><ul><li>가능하면 출력 크기보다 큰 원본을 사용하세요.</li><li>공식 사진은 정면, 고른 조명, 단순하고 밝은 원본 배경이 좋습니다.</li><li>파일 표시와 실제 시그니처가 다른 파일은 안전을 위해 거부합니다.</li></ul><h2>3. 위치와 확대만 조정하기</h2><p>미리보기를 드래그하거나 키보드 화살표로 이동할 수 있습니다. 확대 슬라이더와 90도 회전을 사용해 빈 가장자리가 생기지 않게 맞춥니다.</p><h2>4. 결과 검사 읽기</h2><p>검사는 통과·주의·정보 세 수준입니다. 픽셀과 실제 Blob 용량은 자동 확인하지만 표정, 촬영일과 기관의 최종 판단은 직접 확인해야 합니다.</p><h2>5. 다운로드 후 확인하기</h2><p>파일은 새 이름으로 내려받으며 원본을 덮어쓰지 않습니다. 브라우저가 다운로드를 차단하면 이 사이트의 다운로드 권한을 허용하세요.</p><h2>바로 시작</h2><ul>{presets.map((preset) => <li key={preset.id}><Link href={`/${preset.slug}`}>{preset.title} <ArrowRight size={14} style={{ display: "inline" }} /></Link></li>)}</ul></article></div>;
+  const itemList = {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    name: title,
+    itemListElement: guides.map((guide, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      name: guide.title,
+      url: publicUrl(`/guide/${guide.slug}`),
+    })),
+  };
+
+  return (
+    <>
+      <header className="tool-hero site-shell">
+        <div>
+          <span className="eyebrow"><BookOpenCheck size={15} aria-hidden="true" />픽셀핏 가이드</span>
+          <h1>숫자를 이해하면 결과를 더 정확히 확인할 수 있습니다.</h1>
+          <p>도구를 쓰기 전에 알아둘 크기, 용량, 형식과 개인정보 기준을 계산 예시와 공식 출처로 정리했습니다.</p>
+        </div>
+        <div className="spec-stack"><span>독립 가이드</span><strong>{guides.length}개</strong><span style={{ marginTop: ".65rem" }}>이미지 처리</span><strong>브라우저 기기 내 처리</strong></div>
+      </header>
+
+      <section className="section site-shell" aria-labelledby="guide-list-title">
+        <div className="section-heading">
+          <h2 id="guide-list-title">필요한 주제부터 읽어보세요.</h2>
+          <p>각 글의 내용 업데이트일과 외부 출처 확인일은 서로 구분해 표시합니다.</p>
+        </div>
+        <div className="tool-grid">
+          {guides.map((guide) => (
+            <article className="tool-card" key={guide.slug}>
+              <div className="card-top"><span className="badge">{guide.category}</span><time dateTime={guide.seo.contentUpdatedAt} aria-label={`내용 업데이트 ${guide.seo.contentUpdatedAt}`} style={{ color: "#667386", fontSize: ".75rem" }}>{guide.seo.contentUpdatedAt}</time></div>
+              <h3>{guide.title}</h3>
+              <p>{guide.summary}</p>
+              <div className="card-spec">출처 확인 <time dateTime={guide.source.lastVerifiedAt}>{guide.source.lastVerifiedAt}</time></div>
+              <Link className="card-link" href={`/guide/${guide.slug}`} aria-label={`${guide.title} 읽기`}>가이드 읽기 <ArrowRight size={17} aria-hidden="true" /></Link>
+            </article>
+          ))}
+        </div>
+      </section>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(itemList).replace(/</g, "\\u003c") }} />
+    </>
+  );
 }

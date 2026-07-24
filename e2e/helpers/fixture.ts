@@ -66,5 +66,34 @@ export function readImageDimensions(bytes: Buffer): { width: number; height: num
       offset += length + 2;
     }
   }
+  if (bytes.subarray(0, 4).toString("ascii") === "RIFF" && bytes.subarray(8, 12).toString("ascii") === "WEBP") {
+    const chunk = bytes.subarray(12, 16).toString("ascii");
+    if (chunk === "VP8X" && bytes.length >= 30) {
+      return {
+        width: bytes.readUIntLE(24, 3) + 1,
+        height: bytes.readUIntLE(27, 3) + 1,
+      };
+    }
+    if (chunk === "VP8 " && bytes.length >= 30 && bytes.subarray(23, 26).equals(Buffer.from([0x9d, 0x01, 0x2a]))) {
+      return {
+        width: bytes.readUInt16LE(26) & 0x3fff,
+        height: bytes.readUInt16LE(28) & 0x3fff,
+      };
+    }
+    if (chunk === "VP8L" && bytes.length >= 25 && bytes[20] === 0x2f) {
+      const dimensions = bytes.readUInt32LE(21);
+      return {
+        width: (dimensions & 0x3fff) + 1,
+        height: ((dimensions >>> 14) & 0x3fff) + 1,
+      };
+    }
+  }
   throw new Error("image dimensions not found");
+}
+
+export function readImageFormat(bytes: Buffer): "jpeg" | "png" | "webp" {
+  if (bytes.length >= 8 && bytes.subarray(0, 8).equals(Buffer.from(PNG_SIGNATURE))) return "png";
+  if (bytes.length >= 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) return "jpeg";
+  if (bytes.length >= 12 && bytes.subarray(0, 4).toString("ascii") === "RIFF" && bytes.subarray(8, 12).toString("ascii") === "WEBP") return "webp";
+  throw new Error("image format not found");
 }

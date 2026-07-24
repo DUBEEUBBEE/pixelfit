@@ -3,6 +3,14 @@ import "./globals.css";
 import { brand, publicPath, publicUrl } from "@/config/brand";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { SiteHeader } from "@/components/layout/SiteHeader";
+import { ImageTransferProvider } from "@/components/session/ImageTransferProvider";
+import { AdSenseScript } from "@/components/ads";
+import { env } from "@/config/env";
+
+const verificationOther: Record<string, string> = {
+  ...(env.naverSiteVerification ? { "naver-site-verification": env.naverSiteVerification } : {}),
+  ...(env.adsense.client ? { "google-adsense-account": env.adsense.client } : {}),
+};
 
 export const metadata: Metadata = {
   metadataBase: new URL(brand.url),
@@ -13,30 +21,25 @@ export const metadata: Metadata = {
   openGraph: { type: "website", locale: brand.locale, siteName: brand.name, title: `${brand.name} — 사진 규격 자동 맞춤`, description: brand.description, url: publicUrl() },
   twitter: { card: "summary", title: `${brand.name} — 사진 규격 자동 맞춤`, description: brand.description },
   icons: { icon: publicPath("/icon.svg") },
+  verification: env.googleSiteVerification || Object.keys(verificationOther).length > 0
+    ? {
+        google: env.googleSiteVerification,
+        other: Object.keys(verificationOther).length > 0 ? verificationOther : undefined,
+      }
+    : undefined,
 };
 
 export const viewport: Viewport = { width: "device-width", initialScale: 1, themeColor: "#fbfaf7", colorScheme: "light" };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  const webApplication = {
-    "@context": "https://schema.org",
-    "@type": "WebApplication",
-    name: brand.name,
-    url: brand.url,
-    description: brand.description,
-    applicationCategory: "MultimediaApplication",
-    operatingSystem: "Any modern web browser",
-    inLanguage: "ko",
-    offers: { "@type": "Offer", price: "0", priceCurrency: "KRW" },
-  };
   return (
     <html lang="ko">
       <body>
         <a className="skip-link" href="#main-content">본문으로 건너뛰기</a>
         <SiteHeader />
-        <main id="main-content" className="page-main">{children}</main>
+        <main id="main-content" className="page-main"><ImageTransferProvider>{children}</ImageTransferProvider></main>
         <SiteFooter />
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(webApplication).replace(/</g, "\\u003c") }} />
+        <AdSenseScript />
       </body>
     </html>
   );

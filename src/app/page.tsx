@@ -1,10 +1,29 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, CheckCircle2, LockKeyhole, ShieldCheck, WifiOff } from "lucide-react";
 import { ToolSearch } from "@/components/home/ToolSearch";
 import { copy } from "@/config/copy";
-import { presets } from "@/lib/presets";
+import { toToolSearchSummary } from "@/config/client-tools";
+import { homeCategories, tools } from "@/config/tools";
+import { brand, publicUrl } from "@/config/brand";
+import { AdSlot } from "@/components/ads";
+
+const homeTitle = "이미지 크기·용량·사진 규격 자동 맞춤 | 픽셀핏";
+const homeDescription = "사진 압축, 크기 조절, JPG·PNG·WebP 변환, SNS 이미지, 공식 사진 규격과 개인정보 정리를 브라우저에서 처리합니다.";
+const homeImage = publicUrl("/og/home.png");
+
+export const metadata: Metadata = {
+  title: { absolute: homeTitle },
+  description: homeDescription,
+  alternates: { canonical: publicUrl("/") },
+  openGraph: { type: "website", locale: brand.locale, siteName: brand.name, title: homeTitle, description: homeDescription, url: publicUrl("/"), images: [{ url: homeImage, width: 1200, height: 630, alt: "픽셀핏 이미지 도구" }] },
+  twitter: { card: "summary_large_image", title: homeTitle, description: homeDescription, images: [homeImage] },
+  robots: { index: true, follow: true, googleBot: { index: true, follow: true, "max-image-preview": "large" } },
+};
 
 export default function HomePage() {
+  const toolSearchItems = tools.map(toToolSearchSummary);
+  const website = { "@context": "https://schema.org", "@type": "WebSite", name: brand.name, alternateName: "PixelFit", url: publicUrl("/"), inLanguage: "ko-KR" };
   return (
     <>
       <section className="hero site-shell">
@@ -12,7 +31,7 @@ export default function HomePage() {
         <h1>{copy.hero.title}</h1>
         <p className="hero-lead">{copy.hero.description}</p>
         <p className="privacy-pill"><LockKeyhole size={17} aria-hidden="true" />{copy.hero.privacy}</p>
-        <div id="tools"><ToolSearch presets={presets} /></div>
+        <div id="tools"><ToolSearch presets={toolSearchItems} categories={homeCategories} /></div>
       </section>
 
       <section className="section site-shell" aria-labelledby="steps-title">
@@ -21,6 +40,8 @@ export default function HomePage() {
           {copy.steps.map(([title, description]) => <article className="step-card" key={title}><h3>{title}</h3><p>{description}</p></article>)}
         </div>
       </section>
+
+      <div className="site-shell"><AdSlot placement="home-content-break" /></div>
 
       <section className="section site-shell">
         <div className="trust-panel">
@@ -42,6 +63,7 @@ export default function HomePage() {
           <details><summary>다운로드한 파일은 어디에 저장되나요?</summary><p>브라우저의 다운로드 설정에 따라 사용자의 기기에 저장됩니다. 픽셀핏 서버에는 복사본이 생기지 않습니다.</p></details>
         </div>
       </section>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(website).replace(/</g, "\\u003c") }} />
     </>
   );
 }

@@ -1,10 +1,11 @@
-import { expect, test } from "@playwright/test";
 import JSZip from "jszip";
 import { readFile } from "node:fs/promises";
 import { makePng, readImageDimensions } from "./helpers/fixture";
+import { expect, test } from "./helpers/qa-test";
 
 test("파비콘 ZIP에 유효한 ICO·PNG·manifest와 설치 문서가 들어간다", async ({ page }) => {
   await page.goto("/favicon-maker");
+  await page.waitForLoadState("networkidle");
   await page.getByLabel("사진 또는 파일 선택").setInputFiles({ name: "logo.png", mimeType: "image/png", buffer: makePng(512, 512) });
   await expect(page.getByText("작은 크기 미리보기").or(page.getByLabel("작은 크기 미리보기"))).toBeVisible();
   await page.getByRole("button", { name: /원형 배경/ }).click();
@@ -34,6 +35,7 @@ test("파비콘 ZIP에 유효한 ICO·PNG·manifest와 설치 문서가 들어�
 
 test("PNG 개인정보를 선택 제거하고 재파싱한 파일을 다운로드한다", async ({ page }) => {
   await page.goto("/photo-privacy-cleaner");
+  await page.waitForLoadState("networkidle");
   await page.getByLabel("사진 또는 파일 선택").setInputFiles({ name: "private.png", mimeType: "image/png", buffer: makePng(320, 400, true) });
   await expect(page.getByText("작성자", { exact: true })).toBeVisible();
   await expect(page.getByText("편집 프로그램", { exact: true })).toBeVisible();
@@ -57,6 +59,7 @@ test("이미지를 고른 뒤 외부 쓰기 요청이나 브라우저 저장소 
     if (["POST", "PUT", "PATCH"].includes(request.method())) writes.push(`${request.method()} ${request.url()}`);
   });
   await page.goto("/passport-photo");
+  await page.waitForLoadState("networkidle");
   const before = await page.evaluate(async () => ({
     local: Object.entries(localStorage),
     session: Object.entries(sessionStorage),

@@ -1,24 +1,30 @@
-# 픽셀핏 v1 테스트 계획
+# 픽셀핏 v2 테스트 계획
 
-기준일: 2026-07-22
+기준일: 2026-07-24
 
-## 1. 원칙
+## 1. 상태와 기록 원칙
 
-테스트는 UI 렌더가 아니라 로컬 파일 입력 → 처리 → 실제 Blob/ZIP 생성 → 다운로드까지 검증한다. 생성 파일은 가능한 경우 다시 파싱해 픽셀, 형식, byte 크기, DPI, metadata와 ZIP 엔트리를 확인한다. 실행하지 않은 검사는 `NOT_TESTED`, 실패는 `FAIL`로 [STATUS.md](./STATUS.md)에 남긴다.
+이 문서는 총 13개 도구와 8개 가이드가 있는 v2의 검증 계획이다. 과거 공개 v1의 `PASS`는 새 도구, 같은 사진 전달, 광고 게이트, 가이드, OG PNG와 이중 base-path build의 증거가 아니다.
 
-개인 얼굴 사진을 fixture로 저장하지 않는다. 테스트용 이미지는 코드로 생성한 기하 패턴·색상 블록 또는 라이선스가 명확한 자료만 사용한다. 얼굴 검출 adapter는 deterministic mock으로 기능 흐름을 검사하고 실제 네이티브 API는 별도 smoke로 분리한다.
+테스트 결과는 이 계획에 미리 채우지 않는다. 실제 실행한 명령, commit 또는 작업 트리 식별자, 시간, 브라우저, base mode와 원본 출력은 [STATUS.md](./STATUS.md)에 기록한다.
+
+- 실행 및 성공: `PASS`
+- 실행 및 실패: `FAIL`
+- 실행하지 않음, 환경 부재 또는 증거 없음: `NOT_TESTED`
+
+화면 렌더만으로 도구 기능을 `PASS` 처리하지 않는다. 파일 선택→편집→Blob/ZIP 생성→다운로드를 완료하고 결과를 가능한 범위에서 다시 파싱한다.
 
 ## 2. 환경과 명령
 
 최소 환경:
 
-- package manager: package.json에 고정된 pnpm 버전
-- Node.js: 22 이상
-- unit/component: Vitest + jsdom + React Testing Library
-- E2E: Playwright Chromium desktop 및 iPhone 13 profile
-- 접근성: `@axe-core/playwright`
+- Node.js 22 이상
+- package.json의 pnpm 11.9.0
+- Vitest + jsdom + React Testing Library
+- Playwright Desktop Chrome과 iPhone 13 WebKit
+- `@axe-core/playwright`
 
-명령:
+기본 명령:
 
 ```bash
 pnpm install --frozen-lockfile
@@ -26,175 +32,275 @@ pnpm lint
 pnpm typecheck
 pnpm test
 pnpm build
+pnpm build:pages
+pnpm build:custom:test
+pnpm verify:export
 pnpm test:e2e
 pnpm test:a11y
 pnpm check
 ```
 
-`pnpm check`에 E2E가 포함되어 있지 않으므로 출시 전에 `pnpm test:e2e`와 `pnpm test:a11y`를 별도로 실행한다.
+`pnpm check`는 lint, typecheck, unit/component test, project Pages build와 실제 `pixelfit.o-r.kr` custom-root build를 포함한다. E2E, 접근성, Lighthouse, 실제 GitHub Actions와 공개 URL 검증은 별도다.
 
-## 3. fixture 설계
+## 3. fixture 정책
 
-| fixture | 목적 | 개인정보 |
+| fixture | 목적 | 정책 |
 | --- | --- | --- |
-| 작은 JPEG/PNG/WebP 색상 패턴 | decode, crop, 정확한 출력 픽셀 | 없음 |
-| EXIF orientation 1/3/6/8 JPEG | 방향 정규화와 좌표 | 합성 metadata |
-| GPS/기기/날짜/작성자/XMP/IPTC JPEG | 선택 제거와 scan 보존 | 가상 값만 사용 |
-| text/eXIf/iCCP/pHYs PNG | chunk 선택 제거·보존 | 가상 값만 사용 |
-| EXIF/XMP/ICCP WebP | RIFF 제거·size 갱신 | 가상 값만 사용 |
-| 투명 PNG | 배너/파비콘 배경 합성 | 없음 |
-| 균일 가장자리 + 전경 도형 | 배경 분리 | 사람이 아닌 도형 |
-| 손상·truncated·빈·MIME 위장 파일 | 오류 처리 | 없음 |
-| 픽셀/byte 제한 경계 파일 | 메모리 보호 | 생성 fixture |
+| 작은 JPEG/PNG/WebP 기하 패턴 | decode, crop, resize, encode | 코드로 생성, 개인정보 없음 |
+| 투명 PNG | JPEG 배경 합성, PNG/WebP alpha | 코드로 생성 |
+| orientation 1/3/6/8 JPEG | 방향과 좌표 | 합성 metadata만 사용 |
+| GPS/기기/날짜/XMP/IPTC 파일 | metadata 선택 제거 | 실제 개인정보가 아닌 가상 값 |
+| PNG text/eXIf/iCCP/pHYs | chunk 제거·보존 | 코드로 생성 |
+| WebP EXIF/XMP/ICCP | RIFF 제거·size 갱신 | 코드로 생성 |
+| 균일 배경과 전경 도형 | 배경 분리 | 사람 사진 아님 |
+| 1~4개 색상/숫자 타일 | SNS·네컷 순서와 crop | 코드로 생성 |
+| 손상·빈·MIME 위장 파일 | 오류 경계 | 최소 합성 bytes |
+| byte/pixel 경계 파일 | 메모리 보호 | 생성식과 크기 기록 |
 
-실제 C2PA fixture를 포함할 때는 재배포 라이선스를 확인하고 출처·해시를 notices에 기록한다. 준비되지 않았다면 해당 검사는 `NOT_TESTED`로 남기며 가짜 fixture로 보존 성공을 주장하지 않는다.
+개인 신분증·여권·얼굴 사진을 fixture로 commit하지 않는다. 외부 자료는 라이선스와 출처를 고지하기 전 사용하지 않는다. 실제 C2PA fixture가 없으면 보존 성공을 가짜 metadata로 꾸미지 않고 해당 검사를 `NOT_TESTED`로 둔다. HEIC fixture를 JPEG처럼 위장해 지원된다고 주장하지 않는다.
 
-## 4. Unit test
+## 4. Unit·component 범위
 
-### Registry와 정책
+### Registry와 콘텐츠
 
-- cm→px: 3×4cm/300dpi = 354×472, 3.5×4.5cm/300dpi = 413×531
-- slug 중복, 음수/0 출력 크기, 잘못된 형식 거부
-- official source/확인일 필수 및 `approvalGuaranteed: true` 거부
-- allowed/forbidden 작업 충돌 거부
-- convention 프리셋의 공식 표기 거부
-- 여권에 background-remove/replace, retouch, generative 작업 추가 시 실패
-- 여권 실행 경계에서 배경 모듈 미호출
+- 도구 13개와 가이드 8개의 고유 ID/slug
+- 모든 연결 도구·가이드가 실제 Registry 항목을 가리킴
+- 공식 도구는 기관, 제목, URL, 확인일 필수
+- 관행/서비스 도구는 공식 badge 금지
+- 도구·가이드 OG 경로가 고유한 1200×630 PNG를 가리킴
+- 콘텐츠 수정일, 출처 확인일과 공개 배포일을 혼용하지 않음
+- 화면 FAQ는 존재하되 `FAQPage` JSON-LD는 생성하지 않음
+- 가짜 review/rating/사용량/날짜 metadata 부재
 
-### 파일·기하·렌더
+### 환경과 URL
 
-- MIME/signature 일치 및 위장/빈/손상 파일 거부
-- cover/contain, 경계 clamp, 최소·최대 zoom
-- 90/180/270도 회전 좌표와 회전 후 크기
-- 얼굴 bbox 기반 초기 crop과 late result 무시
-- DPR과 무관한 출력 치수
-- 안전영역 2048×1152 → 2560×1440 스케일
-- 출력 ASCII 파일명과 크기 formatting
+- 기본 사이트 URL과 Issues 연락처가 실제 값
+- project Pages에서 `/pixelfit`이 canonical·asset·sitemap URL에 한 번만 결합됨
+- custom domain이 있으면 canonical은 HTTPS root, base path는 빈 값
+- 페이지 URL은 trailing slash, 파일 URL은 확장자 뒤 slash 없음
+- 잘못된 URL/custom hostname은 실패하고 선택값 오류는 안전한 경고 처리
+- 유효한 Google token일 때만 Search Console URL-prefix 확인 meta 생성
+- 유효한 Naver token일 때만 verification meta 생성
 
-### 인코드·압축·DPI
+### 광고
 
-- 제한 횟수 품질 탐색과 종료 조건
-- 달성/미달 시 올바른 결과 상태
-- 여권 JPEG 413×531 및 500KB 이하 parse-back
-- 배너 2560×1440 및 6MB 이하 parse-back
-- JPEG density, PNG pHYs 기록 뒤 300dpi 허용 오차 내 parse-back
+- 기본값과 불완전 설정에서 script·slot DOM 0
+- 유효 client/slot과 enable flag가 모두 있을 때만 렌더 가능
+- 광고가 OFF여도 유효한 실제 client가 있으면 account meta와 custom-root `ads.txt`가 생성되며, 광고 loader·slot·request는 여전히 0
+- safe placement 3개만 허용
+- upload/editor/preview/result/download/navigation/privacy/terms/contact에서 차단
+- 광고 OFF 빌드에서 Google 광고 요청이 유발되지 않음
 
-### 개인정보 container
+### 이미지 공통
 
-- JPEG APP segment 선택 제거, scan data byte 동일성(무손실을 약속한 경로)
-- JPEG orientation/ICC/DPI 보존 표시와 실제 결과 일치
-- PNG 개인정보성 text/eXIf 제거, IDAT/iCCP/pHYs/alpha 보존
-- PNG chunk length/CRC 유효성
-- WebP EXIF/XMP 제거, image/alpha/ICC payload 보존, RIFF size/padding 유효성
-- 제거 결과 재파싱 시 선택 필드 부재
-- 출처 관련 segment가 제거 선택지에 들어가지 않음
+- MIME/signature, 빈·손상·초대형 입력 거부
+- cover/contain, ratio lock, crop clamp와 회전 좌표
+- stale async 결과가 새 파일·설정을 덮지 않음
+- Blob URL 교체·초기화·unmount 해제
+- 결과 MIME, signature, dimensions와 byte parse-back
 
-### 배경·파비콘
+### 기존 6개 도구
 
-- 가장자리 대표색과 mask가 동일 입력에서 동일 출력
-- 원본 fallback과 허용 프리셋 검사
-- 16/32/48/180/192/512 PNG dimension
-- ICO directory와 16/32/48 entry decode
-- manifest JSON 기본 name/short_name 유효성
-- ZIP 필수 엔트리, 안정된 이름, 내부 파일 재검증
+- 여권 413×531 JPEG, 실제 500KB 이하, background 작업 호출 차단
+- 3×4cm=354×472, 3.5×4.5cm=413×531 환산
+- 주민등록증 선택 JPEG/PNG와 DPI 표시/기록 일치
+- YouTube 배너 2560×1440, 6MB 이하, 1235×338 최소 안전영역의 비율 환산
+- 파비콘 PNG/ICO dimensions, manifest JSON, ZIP 필수 entry
+- 개인정보 parser의 선택 제거, checksum/size와 표시한 보존 속성
 
-## 5. Component test
+### v2 추가 7개 도구
 
-- 홈 검색의 여권/증명사진/주민등록증/유튜브/파비콘/위치정보/개인정보 키워드
-- 프리셋 카드의 규격, 공식/일반 배지와 링크
-- 업로드 label, 파일 선택, drag/drop, 지원 형식 안내
-- 잘못된 파일 오류와 구체적 복구 안내
-- crop 이동, zoom label/현재 값, rotate/reset, 키보드 화살표
-- stale async 작업이 새 작업 상태를 덮지 않음
-- pass/warning/info checklist가 아이콘·상태명·텍스트를 함께 표시
-- 공식 출처, 확인일, 승인 비보장 면책
-- 일반 증명사진 배경 테마와 원본 복귀
-- 배너 안전영역 텍스트 대안
-- 파비콘 작은 크기 미리보기와 manifest 기본값
-- 개인정보 필드 선택, 제거/유지/재인코드·출처 영향 확인
+- 압축: KB/MB 변환, 제한된 품질 탐색, 최대 축소 횟수, 목표 달성/미달 상태와 actual bytes
+- 리사이즈: 직접 치수·긴 변·퍼센트, 비율 잠금, contain/cover, 업스케일 경고
+- 변환: JPEG/PNG/WebP signature, 투명→JPEG 배경 합성, 재인코딩·metadata 문구, HEIC 거부
+- SNS 팩: 1:1·4:5·9:16 독립 crop, 원형 preview, 개별/ZIP result
+- YouTube 썸네일: 3840×2160, 16:9, template text overflow와 작은 preview
+- 네컷: 1~4장 순환 배치, 순서·crop·가로/세로·필터·날짜·문구, JPEG/PNG
+- 필름: 고정 seed 재현성, grain/vignette/light leak/date/BW/저채도/flash, 비교·reset
 
-## 6. E2E 시나리오
+### 같은 사진 전달
 
-각 도구는 desktop과 mobile 중 최소 하나의 완전한 다운로드 흐름을 가진다. 핵심 공통 흐름은 두 viewport 모두 수행한다.
+- 명시적 CTA 이전에는 transfer ref가 비어 있음
+- 허용 대상 tool ID만 한 번 claim 가능
+- claim 뒤 ref가 지워지고 두 번째 claim은 실패
+- 다른 대상 도구는 파일을 얻지 못함
+- storage API를 사용하지 않으며 새로고침 후 복구되지 않음
 
-1. 홈에서 검색·카드로 각 도구에 이동한다.
-2. fixture를 업로드하고 미리보기가 나타날 때까지 상태 기반으로 기다린다.
-3. 위치·확대·회전 또는 해당 도구 테마를 조정한다.
-4. 결과를 생성하고 다운로드 이벤트를 확인한다.
-5. 저장된 파일을 테스트에서 열어 도구별 계약을 검사한다.
-6. 처리 중 콘솔 `error`와 처리되지 않은 page error가 0건인지 확인한다.
+## 5. E2E 공통 절차
 
-도구별 계약:
+각 도구는 최소 한 번의 실제 다운로드 흐름을 가진다. 중요한 공통 도구는 desktop과 mobile 양쪽에서 수행한다.
 
-| 도구 | 필수 E2E assertion |
+1. 홈 검색 또는 카드에서 대상 route로 이동한다.
+2. 합성 fixture를 선택하고 실제 preview가 나타날 때까지 상태 기반으로 기다린다.
+3. 도구별 설정을 변경하고 화면 상태와 접근 가능한 이름을 확인한다.
+4. 실제 결과를 생성하고 download event를 수집한다.
+5. 저장 파일을 테스트 process에서 열어 형식·픽셀·byte·ZIP entry를 검사한다.
+6. 처리되지 않은 page error와 예상 밖 console error가 0인지 확인한다.
+7. route 이동, 직접 URL 접근과 새로고침을 확인한다.
+
+## 6. 13개 도구 E2E 계약
+
+| 도구 | 핵심 assertion |
 | --- | --- |
-| 여권 | JPEG, 413×531, ≤500KB, 배경 UI/호출 없음, 면책 표시 |
-| 일반 증명 | 354×472, 배경 테마 전환, 원본 fallback |
-| 주민등록증 | 413×531, 선택 형식, 300dpi 표시/실제 기록 일치 |
-| YouTube | 2560×1440, ≤6MB, 안전영역·예상 기기 미리보기 |
-| 파비콘 | ZIP 다운로드, 필수 엔트리, PNG/ICO dimension, manifest parse |
-| 개인정보 | 선택 metadata 제거, 결과 재파싱, 원본 덮어쓰기 없음 |
+| 여권사진 | JPEG 413×531, ≤512,000B, 배경 작업 부재, 승인 면책 |
+| 일반 증명사진 | 354×472, 배경 후보와 원본 fallback |
+| 주민등록증 사진 | 413×531, 선택 형식, 서비스 환산값 설명 |
+| YouTube 배너 | 2560×1440, ≤6MiB, 안전영역·기기별 예상 표시 |
+| 파비콘 | ZIP, ICO/PNG dimensions, manifest와 안내문 parse |
+| 개인정보 정리 | 선택 metadata 제거, 결과 재파싱, 원본 비덮어쓰기 |
+| 사진 용량 줄이기 | 목표 actual bytes, 달성·미달, 해상도 축소 opt-in |
+| 이미지 크기 조절 | 설정 치수, ratio/contain/cover, 업스케일 경고 |
+| 이미지 형식 변환 | JPEG/PNG/WebP 실제 signature, alpha/background, HEIC 거부 |
+| SNS 이미지 세트 | 세 비율의 별도 crop과 individual/ZIP 파일 |
+| YouTube 썸네일 | 3840×2160, 16:9, template text와 preview |
+| 네컷사진 | 파일 수별 반복 순서, 두 layout, 프레임·필터·텍스트 |
+| 필름사진 | effect 변화, 동일 설정 재현, 비교·reset, 다운로드 |
 
-추가 오류 E2E는 잘못된 signature, 손상 파일, 너무 큰 입력, decode 실패, 자동 얼굴 미검출, 압축 목표 미달, 다운로드 실패/차단을 가능한 범위에서 주입해 복구 문구를 확인한다.
+추가 오류 시나리오는 잘못된 signature, 손상, 과대 입력, decode 실패, 얼굴 미검출, 압축 목표 미달, ZIP 실패와 download 차단을 가능한 범위에서 주입한다. 오류를 성공 화면으로 전환하지 않고 복구 문구를 확인한다.
 
-## 7. 개인정보 E2E
+## 7. 8개 가이드·SEO E2E
 
-production-like 정적 서버에서 업로드 전후 request를 수집한다.
+- `/guide`에 8개 카드가 있고 각 route로 이동 가능
+- 8개 상세 route의 title, description, canonical, OG/Twitter 이미지
+- 1200×630 OG PNG가 실제로 존재하고 HTTP 200/MIME이 올바름
+- 도구 CTA와 관련 가이드 링크가 base path를 존중
+- visible FAQ는 읽을 수 있으나 DOM/HTML에 `FAQPage` JSON-LD가 없음
+- 홈 `WebSite`, 가이드 허브 `ItemList`, 도구 `BreadcrumbList`, 가이드 상세 `BreadcrumbList`/`Article`만 parse 가능
+- 실제 price·review·rating 근거가 없는 `WebApplication`/`SoftwareApplication`이 없음
+- sitemap에 13개 도구, 8개 가이드와 정보 페이지가 base mode에 맞게 포함
+- robots와 canonical에 잘못된 host·중복 base path·가짜 연락처가 없음
 
-- 작업 이후 이미지 처리 관련 외부 request가 없는지 확인한다.
-- POST/PUT/PATCH가 0건인지 확인한다.
-- fixture 고유 byte marker가 어떤 request body에도 없는지 확인한다.
-- localStorage와 sessionStorage가 비어 있는지 확인한다.
-- IndexedDB database와 Cache Storage에 이미지 데이터가 없는지 확인한다.
-- 초기화·route 이동 후 이전 preview가 사라지고 Blob URL 참조가 남지 않는지 확인한다.
-- 콘솔 출력에 fixture 파일명, GPS, 기기, 얼굴 bbox가 없는지 확인한다.
+Search Console URL-prefix 확인 meta의 존재는 E2E로 검사할 수 있지만 속성 등록, 소유권 확인, sitemap 제출과 색인은 대신할 수 없다. 공개 HTTPS를 포함한 외부 검증을 실제로 하지 않았다면 `NOT_TESTED`다.
 
-Playwright가 브라우저 내부 메모리의 즉시 zeroization을 증명할 수는 없다. 참조 해제와 저장/전송 부재를 검증하고 그 한계를 기록한다.
+## 8. 개인정보·네트워크 E2E
 
-## 8. 접근성
+production-like preview에서 request와 storage를 수집한다.
 
-`@a11y` 태그 시나리오는 홈, 여섯 도구의 초기/편집/결과 상태, privacy, terms, guide, 404를 포함한다.
+- 이미지 작업으로 생긴 POST/PUT/PATCH 0건
+- fixture marker, 파일명, GPS, 기기명, 얼굴 bbox가 request body/URL/console에 없음
+- localStorage/sessionStorage/IndexedDB/Cache Storage에 이미지·파생 데이터 없음
+- 같은 사진 전달이 one-shot이며 reload에서 사라짐
+- 초기화·파일 교체·route 이동 후 이전 preview와 Object URL 해제
+- 광고 OFF: 광고 script, slot DOM, Google 광고 request 0
+- 광고 ON: 별도 build에서 safe placement만 사용, 사용자 이미지 body 부재, CMP·동의 흐름은 외부 운영 증거로 분리
 
-- axe의 critical/serious violation 0건
-- 키보드만으로 파일 선택 이후 핵심 흐름 완료
-- focus order/visible, skip link, heading·landmark 구조
-- form label, slider 이름·값, 오류 연결
-- status `aria-live`, processing `aria-busy`
-- 상태가 색상만으로 전달되지 않음
-- 안전영역·crop의 텍스트 대안
-- 44px 수준의 모바일 터치 타깃 검토
-- reduced motion 환경에서 불필요한 애니메이션 없음
+브라우저 메모리의 즉시 zeroization은 자동화로 증명할 수 없다. 참조 해제와 저장·전송 부재만 검증하고 한계를 기록한다.
 
-자동 axe 통과만으로 접근성 완료를 선언하지 않고 키보드와 스크린리더용 이름을 수동 확인한다.
+## 9. 접근성
 
-## 9. 시각·브라우저 QA
+`pnpm test:a11y` 대상은 다음을 포함한다.
+
+- 홈
+- 13개 도구의 초기 상태, 대표 upload/edit/result 상태
+- 가이드 인덱스와 대표 공식·관행 가이드
+- about, privacy, terms, contact, 404
+
+자동·수동 기준:
+
+- axe critical/serious violation 0
+- skip link, heading·landmark 구조와 visible focus
+- 파일 input, 버튼, slider, color/input의 이름·값·오류 연결
+- `aria-live`, `aria-busy`, 색상 외 상태 텍스트
+- 키보드만으로 핵심 흐름과 crop/설정 조작
+- 안전영역·원형 preview·crop의 텍스트 대안
+- 44px 수준의 모바일 touch target 검토
+- reduced motion, 200% zoom과 긴 한국어 줄바꿈
+
+axe 통과만으로 완료하지 않는다. 키보드와 VoiceOver 또는 동등한 스크린리더 smoke가 없으면 그 항목은 `NOT_TESTED`다.
+
+## 10. 시각·브라우저 QA
 
 권장 viewport:
 
-- desktop: 1440×900
-- narrow desktop/tablet: 768×1024
-- mobile: 390×844 및 320×568 경계 확인
+- 1440×900 desktop
+- 768×1024 tablet
+- 390×844 mobile
+- 320×568 narrow boundary
 
-홈, 각 도구의 업로드/편집/결과, privacy/terms/guide/404 스크린샷을 생성하고 실제로 열어 다음을 확인한다.
+홈, 도구의 upload/edit/result, 가이드와 정보 페이지를 실제 스크린샷으로 열어 다음을 확인한다.
 
-- 가로 overflow, 겹침, 잘림, 긴 한국어 줄바꿈
-- sticky 다운로드 버튼이 콘텐츠·키보드를 가리지 않음
-- Canvas와 안내선 비율/중앙 정렬
-- focus ring, 상태 대비, disabled/processing 차이
-- 모바일 회전과 safe-area inset
+- 가로 overflow, 겹침, 잘림, sticky CTA 가림
+- Canvas 비율, crop·안전영역과 원형 preview 정렬
+- focus ring, disabled/processing 차이와 대비
+- 긴 제목·FAQ·표의 모바일 줄바꿈
+- 광고 OFF의 빈 공간 부재와 광고 ON safe placement
 
-Chromium desktop/mobile을 필수로 하고, Safari/WebKit의 파일·Canvas·메모리 위험 때문에 가능하면 WebKit smoke를 수행한다. 설정에 없는 브라우저를 실행하지 않았다면 `NOT_TESTED`로 남긴다.
+Desktop Chrome과 iPhone 13 WebKit 자동 검사는 필수다. 별도 Chromium 모바일 emulation과 실기기 Safari를 실행하지 않았다면 각각 `NOT_TESTED`로 기록한다.
 
-## 10. 성능·보안·SEO
+## 11. 이중 build·preview
 
-- production build route 목록과 bundle 경고 확인
-- 홈 초기 로드에서 얼굴/배경 관련 무거운 모듈이나 모델 요청이 없는지 확인
-- 대형 입력에서 UI 응답, 취소와 메모리 회복 smoke
-- 응답 security header, CSP 위반, 외부 script/request 확인
-- canonical, title, description, OG/Twitter, visible FAQ와 JSON-LD 일치
-- sitemap/robots/404와 정적 호스트 clean URL 확인
-- Lighthouse 또는 동등한 측정을 실제로 실행한 경우에만 수치 기록
+두 mode를 같은 명령의 재실행으로 간주하지 않고 각각 산출물·로그를 남긴다.
 
-## 11. 출시 판정
+### GitHub project Pages mode
 
-필수 unit/component/E2E/a11y/build가 모두 PASS이고 privacy 검사가 PASS여야 release candidate가 된다. 실제 호스트 설정이 필요한 항목은 staging 또는 공개 URL에서 확인한다. 실행 결과는 [RELEASE_CHECKLIST.md](./RELEASE_CHECKLIST.md)에 증거와 함께 반영한다.
+```bash
+pnpm build:pages
+```
+
+검사:
+
+- `out/` route와 `_next` asset이 `/pixelfit`을 정확히 한 번 사용
+- canonical, OG, sitemap, robots가 실제 project Pages URL
+- `/pixelfit/` 아래 직접 URL과 새로고침
+- 정적 asset, OG PNG, manifest와 download MIME
+
+### Custom-domain root mode
+
+```bash
+pnpm build:custom:test
+```
+
+`build:custom:test`의 host는 로컬 계약 검사용 `.test` 값이며 실제 소유 도메인이나 DNS 적용을 뜻하지 않는다. `pnpm build`는 현재 실제 production host `pixelfit.o-r.kr`의 custom-root 계약과 verifier를 실행한다. GitHub Actions에서는 같은 값을 `pnpm build:deploy`에 전달한 뒤 `pnpm verify:export`를 실행한다.
+
+검사:
+
+- canonical과 sitemap이 root origin이며 `/pixelfit` 잔존 0
+- 내부 link와 `_next` asset이 root-relative
+- Pages `CNAME` 자동 적용을 성공으로 가정하지 않음
+- 실제 소유 도메인의 DNS, Pages Settings, TLS는 외부 검증 전 `NOT_TESTED`
+- 2026-07-24 확인 시 DNS는 GitHub Pages를 가리켰지만 `pixelfit.o-r.kr`의 HTTPS 인증서가 유효하지 않았으므로 TLS와 검색 소유권 확인은 미완료
+
+두 build가 모두 성공하고 각 `out/`을 별도로 preview해도 공개 배포 완료를 뜻하지 않는다.
+
+## 12. Lighthouse
+
+production static preview 또는 실제 후보 URL에서 다음 대표 route를 mobile/desktop으로 측정한다.
+
+- 홈
+- `/passport-photo`
+- `/image-compressor`
+- `/youtube-thumbnail`
+- `/four-cut-photo`
+- 대표 가이드 1개
+
+목표:
+
+| 항목 | 목표 |
+| --- | ---: |
+| Performance | ≥ 90 |
+| Accessibility | ≥ 95 |
+| Best Practices | ≥ 95 |
+| SEO | ≥ 95 |
+| CLS | < 0.1 |
+
+환경, throttling, route, build mode와 실제 숫자를 원본 report와 함께 기록한다. 목표 미달은 숨기지 않고 `FAIL` 또는 승인된 알려진 제한으로 처리한다. 실행하지 않았다면 숫자를 추정하지 않고 `NOT_TESTED`다.
+
+## 13. 출시 판정
+
+로컬 v2 release candidate가 되려면 다음 증거가 필요하다.
+
+- lint, typecheck, unit/component, production build `PASS`
+- 13개 도구 실제 다운로드 E2E `PASS`
+- 8개 가이드와 SEO route 검사 `PASS`
+- privacy·storage·same-photo·광고 OFF 검사 `PASS`
+- 접근성 자동 검사와 필수 수동 smoke `PASS`
+- project Pages와 custom root build 계약 `PASS`
+- Lighthouse 결과와 알려진 제한 기록
+
+공개 v2 release로 승인하려면 로컬 RC에 더해 다음 증거가 필요하다.
+
+- 최종 commit과 GitHub-hosted Actions `PASS`
+- GitHub Pages artifact 배포와 실제 공개 URL smoke `PASS`
+- 공개 HTTPS, asset MIME, 직접 URL·새로고침과 404 동작 확인
+
+외부 계정 단계인 DNS/TLS, Search Console, Naver, AdSense 승인, CMP와 `ads.txt`는 완료된 것만 별도로 표시한다. 현재 `pixelfit.o-r.kr`은 Public Suffix List에 등록된 플랫폼 하위 도메인이 아닌 일반 하위 도메인이고 상위 `o-r.kr/ads.txt`를 제어할 수 없으므로, AdSense 테스트는 운영자가 제어하는 등록 가능 루트 도메인을 확보하기 전 차단 상태다. 어느 하나라도 증거가 없으면 공개 v1 기록을 재사용하지 않고 v2 항목을 `NOT_TESTED` 또는 미완료로 둔다.

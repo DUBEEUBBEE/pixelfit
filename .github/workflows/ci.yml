@@ -34,8 +34,14 @@ jobs:
       - name: Install browser engines
         run: pnpm exec playwright install --with-deps chromium webkit
 
-      - name: Run static checks, tests, and build
-        run: pnpm check
+      - name: Run static checks and unit tests
+        run: pnpm lint && pnpm typecheck && pnpm test
+
+      - name: Build and verify GitHub project Pages contract
+        run: pnpm build:pages
+
+      - name: Build and verify custom-domain root contract
+        run: pnpm build:custom:test
 
       - name: Run browser tests
         run: pnpm test:e2e

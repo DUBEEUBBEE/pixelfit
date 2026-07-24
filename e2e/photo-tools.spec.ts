@@ -1,6 +1,6 @@
-import { expect, test } from "@playwright/test";
 import { readFile } from "node:fs/promises";
 import { makePng, readImageDimensions } from "./helpers/fixture";
+import { expect, test } from "./helpers/qa-test";
 
 const photoTools: ReadonlyArray<{ route: string; width: number; height: number; filename: string; maxBytes?: number }> = [
   { route: "/passport-photo", width: 413, height: 531, filename: "passport-photo-413x531.jpg", maxBytes: 500 * 1024 },
@@ -14,6 +14,7 @@ for (const tool of photoTools) {
     const consoleErrors: string[] = [];
     page.on("console", (message) => { if (message.type() === "error") consoleErrors.push(message.text()); });
     await page.goto(tool.route);
+    await page.waitForLoadState("networkidle");
     await page.getByLabel("사진 또는 파일 선택").setInputFiles({ name: "synthetic-fixture.png", mimeType: "image/png", buffer: makePng() });
     await expect(page.getByText("크기와 위치")).toBeVisible();
     await page.getByLabel("확대").press("ArrowRight");
@@ -38,6 +39,7 @@ for (const tool of photoTools) {
 
 test("여권사진에서는 배경 제거·합성 경로가 노출되지 않는다", async ({ page }) => {
   await page.goto("/passport-photo");
+  await page.waitForLoadState("networkidle");
   await page.getByLabel("사진 또는 파일 선택").setInputFiles({ name: "passport.png", mimeType: "image/png", buffer: makePng() });
   await expect(page.getByText(/배경 제거·합성·얼굴 보정은 실행할 수 없습니다/)).toBeVisible();
   await expect(page.getByRole("button", { name: /흰색 배경/ })).toHaveCount(0);
@@ -45,6 +47,7 @@ test("여권사진에서는 배경 제거·합성 경로가 노출되지 않는�
 
 test("처리 중 새 파일을 골라도 최신 파일 상태로 계속된다", async ({ page }) => {
   await page.goto("/id-photo");
+  await page.waitForLoadState("networkidle");
   const input = page.getByLabel("사진 또는 파일 선택");
   await input.setInputFiles({ name: "first.png", mimeType: "image/png", buffer: makePng(600, 800) });
   await expect(page.getByText("크기와 위치")).toBeVisible();

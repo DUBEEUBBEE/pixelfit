@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { detectImageType } from "./signatures";
 import { createOutputFilename } from "./names";
-import { formatBytes } from "./validation";
+import { formatBytes, MAX_IMAGE_EDGE, validatePixelCount } from "./validation";
 
 describe("file helpers", () => {
   it("detects signatures instead of trusting extensions", () => {
@@ -19,5 +19,10 @@ describe("file helpers", () => {
   it("formats file sizes", () => {
     expect(formatBytes(512_000)).toBe("500KB");
     expect(formatBytes(6 * 1024 * 1024)).toBe("6.0MB");
+  });
+
+  it("rejects extreme single-edge dimensions before a browser canvas allocation", () => {
+    expect(() => validatePixelCount(8_000, 5_000)).not.toThrow();
+    expect(() => validatePixelCount(MAX_IMAGE_EDGE + 1, 1)).toThrow(/한 변이 너무 깁니다/u);
   });
 });

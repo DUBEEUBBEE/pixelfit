@@ -1,27 +1,47 @@
-const configuredUrl = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "");
-const configuredBasePath = process.env.NEXT_PUBLIC_BASE_PATH;
+import { env } from "./env";
 
-export const basePath = !configuredBasePath || configuredBasePath === "/"
-  ? ""
-  : `${configuredBasePath.startsWith("/") ? "" : "/"}${configuredBasePath}`.replace(/\/+$/, "");
+export const basePath = env.basePath;
+
+const contactHref = env.contactEmail ? `mailto:${env.contactEmail}` : env.contactUrl;
+const contactLabel = env.contactEmail ?? "GitHub Issues 문의";
 
 export const brand = {
   name: "픽셀핏",
   legalName: "픽셀핏",
+  operatorName: env.operatorName,
   description: "사진을 올리면 용도에 맞는 픽셀, 비율, 여백과 파일 형식을 기기 안에서 맞춰주는 이미지 도구",
-  url: configuredUrl ?? "https://pixelfit.example",
-  contactEmail: "help@pixelfit.example",
+  url: env.siteUrl,
+  contactEmail: env.contactEmail,
+  contactUrl: env.contactUrl,
+  contactHref,
+  contactLabel,
   locale: "ko_KR",
 } as const;
 
-export const isPlaceholderBrandUrl = !configuredUrl;
+/** @deprecated 실제 공개 URL을 기본값으로 사용하므로 항상 false입니다. */
+export const isPlaceholderBrandUrl = false;
 
-export function publicPath(path = "/") {
-  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
-  return `${basePath}${normalizedPath}` || "/";
+function normalizePath(path: string): { pathname: string; suffix: string } {
+  if (!path) return { pathname: "/", suffix: "" };
+  const suffixIndex = path.search(/[?#]/u);
+  const pathname = suffixIndex === -1 ? path : path.slice(0, suffixIndex);
+  const suffix = suffixIndex === -1 ? "" : path.slice(suffixIndex);
+  if (!pathname || pathname === "/") return { pathname: "/", suffix };
+  return { pathname: `/${pathname.replace(/^\/+|\/+$/g, "")}`, suffix };
 }
 
-export function publicUrl(path = "/") {
-  const normalizedPath = path === "/" ? "" : path.startsWith("/") ? path : `/${path}`;
-  return `${brand.url}${normalizedPath}`;
+function isFilePath(path: string): boolean {
+  return /\/[^/]+\.[A-Za-z0-9]+$/u.test(path);
+}
+
+export function publicPath(path = "/"): string {
+  const { pathname, suffix } = normalizePath(path);
+  return `${basePath}${pathname}${suffix}` || "/";
+}
+
+export function publicUrl(path = "/"): string {
+  const { pathname, suffix } = normalizePath(path);
+  if (pathname === "/") return `${brand.url}/${suffix}`;
+  if (isFilePath(pathname)) return `${brand.url}${pathname}${suffix}`;
+  return `${brand.url}${pathname}/${suffix}`;
 }

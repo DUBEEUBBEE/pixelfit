@@ -1,25 +1,27 @@
-# Third-Party Notices
+# 제3자 고지
 
-Inventory checked: 2026-07-22
+Inventory 확인일: 2026-07-23
 
-PixelFit itself is marked `UNLICENSED`. The following inventory covers direct packages resolved in the local lockfile/install at the checked date. It is not a substitute for reviewing the complete transitive dependency license set in a release artifact.
+픽셀핏 자체 package는 `UNLICENSED`다. 아래 목록은 확인일의 `package.json`과 lockfile/install에서 확인한 직접 의존성이다. release artifact의 전체 transitive dependency 라이선스 검토를 대신하지 않는다.
+
+2026-07-23 로컬 v2 후보의 7개 추가 도구, 8개 가이드, 환경설정, 광고 게이트와 OG 자산을 위해 **새 직접 runtime 또는 development dependency를 추가하지 않았다.** 버전과 직접 dependency 구성은 공개 v1과 동일하다.
 
 ## Runtime dependencies
 
-| Package | Resolved version | License | Project |
+| Package | 확인 버전 | License | Project |
 | --- | ---: | --- | --- |
-| JSZip | 3.10.1 | MIT OR GPL-3.0-or-later; PixelFit uses the MIT option | https://github.com/Stuk/jszip |
+| JSZip | 3.10.1 | MIT OR GPL-3.0-or-later; 픽셀핏은 MIT 선택 | https://github.com/Stuk/jszip |
 | lucide-react | 1.25.0 | ISC | https://github.com/lucide-icons/lucide |
 | Next.js | 16.2.11 | MIT | https://nextjs.org |
 | React | 19.2.8 | MIT | https://github.com/facebook/react |
 | react-dom | 19.2.8 | MIT | https://github.com/facebook/react |
 | Zod | 4.4.3 | MIT | https://github.com/colinhacks/zod |
 
-## Development and test dependencies
+## Development·test dependencies
 
-These tools are not intended to be shipped as application runtime code, but they are recorded for reproducible development and CI.
+다음 package는 앱 runtime으로 직접 제공하기 위한 것이 아니라 재현 가능한 개발·CI를 위해 기록한다.
 
-| Package | Resolved version | License | Project |
+| Package | 확인 버전 | License | Project |
 | --- | ---: | --- | --- |
 | @axe-core/playwright | 4.12.1 | MPL-2.0 | https://github.com/dequelabs/axe-core-npm |
 | @playwright/test | 1.61.1 | Apache-2.0 | https://github.com/microsoft/playwright |
@@ -38,17 +40,34 @@ These tools are not intended to be shipped as application runtime code, but they
 | TypeScript | 5.9.3 | Apache-2.0 | https://github.com/microsoft/TypeScript |
 | Vitest | 4.1.10 | MIT | https://github.com/vitest-dev/vitest |
 
-The authoritative license text and copyright notices for each package are distributed in that package's `LICENSE`, `LICENSE.md`, `COPYING`, or package metadata under `node_modules` and in its linked upstream repository. A release distributor must preserve the notices required by the selected licenses and review transitive packages produced by the lockfile.
+각 package의 권위 있는 저작권·라이선스 문구는 설치된 package의 `LICENSE`, `LICENSE.md`, `COPYING`, package metadata와 위 upstream 저장소에 있다. 배포자는 lockfile이 만드는 transitive package도 검토하고 각 라이선스가 요구하는 고지를 보존해야 한다.
 
-## Models, remote services, fonts, and fixtures
+## Project-owned OG assets
 
-- No third-party ML model is listed for v1. Optional face assistance uses the browser's native `FaceDetector` when available and otherwise falls back to manual cropping.
-- Background-edge segmentation is project code using deterministic pixel/color calculations; it does not bundle a third-party segmentation model.
-- Image processing does not call a remote image, face, background-removal, or metadata API.
-- No third-party CDN-hosted runtime script or model is part of the documented architecture.
-- Test fixtures must be generated in-project or have a separately recorded redistribution license. Personal identity photos must not be committed.
+- `public/og/home.png`, `public/og/tools/*.png`와 `public/og/guides/*.png`는 픽셀핏용 1200×630 공유 이미지다.
+- 도구 OG PNG는 `scripts/generate-og.mjs`가 프로젝트 코드의 도형, 색상, 고정 seed와 자체 5×7 bitmap glyph로 생성한다.
+- generator는 Node.js built-in `node:fs/promises`, `node:path`, `node:zlib`만 사용하며 이미지·폰트 package를 추가하지 않는다.
+- 가이드 OG PNG와 보조 SVG도 프로젝트가 직접 만든 기하·타이포그래피 자산이며 외부 사진, 상표 로고, stock image 또는 사용자 업로드 이미지를 포함하지 않는다.
+- 자체 생성이라는 설명은 제3자 상표권·콘텐츠를 가져왔다는 뜻이 아니다. 앞으로 외부 자산을 추가하면 source, creator, license와 redistribution 조건을 이 문서에 기록한다.
 
-If a model, HEIC decoder, SVG sanitizer/rasterizer, font, icon set beyond Lucide, or externally sourced fixture is added, update this file with its exact version/source, license, redistribution terms, model/data license, and any required attribution before release.
+## Test fixtures
+
+- 테스트 이미지는 코드로 만든 색상 블록, 기하 도형, 숫자 타일과 합성 metadata를 사용한다.
+- GPS, 촬영일, 기기명, XMP/IPTC 예시는 실제 사람의 값이 아닌 가상 fixture여야 한다.
+- 개인 여권·신분증·얼굴 사진 또는 사용자 업로드를 fixture로 commit하지 않는다.
+- 실제 C2PA/Content Credentials fixture를 추가하려면 재배포 license, source와 hash를 먼저 기록한다. 준비되지 않았으면 검사를 `NOT_TESTED`로 두고 가짜 credential metadata로 성공을 주장하지 않는다.
+- HEIC 지원을 가장하기 위해 확장자만 바꾼 fixture를 사용하지 않는다.
+
+## Models, services, fonts와 icons
+
+- third-party ML model을 bundle하지 않는다. 선택적 얼굴 보조는 브라우저 native `FaceDetector`가 있을 때만 사용하고 아니면 수동 crop으로 이어진다.
+- 일반 증명사진 배경 분리와 필름 효과는 프로젝트의 deterministic pixel/color 계산이며 third-party segmentation·generative model이 아니다.
+- 이미지 처리, 얼굴, 배경 제거, metadata 정리를 위한 remote API를 사용하지 않는다.
+- AdSense를 명시적으로 활성화하면 Google의 remote script/service가 별도 조건으로 사용될 수 있다. 이는 이미지 처리 dependency가 아니며 운영자는 Google 약관, 개인정보·cookie/CMP 요구와 `ads.txt`를 별도로 검토해야 한다.
+- runtime webfont나 외부 font file을 bundle하지 않는다. OG generator도 자체 bitmap glyph를 사용한다.
+- 앱 icon library는 `lucide-react` 하나다. Lucide 외 icon set이나 상표 logo를 추가하면 정확한 source와 license를 기록한다.
+
+모델, HEIC decoder, SVG sanitizer/rasterizer, font, Lucide 외 icon set, 외부 fixture 또는 stock image를 추가하면 release 전에 exact version/source, license, redistribution terms, model/data license와 필요한 attribution을 이 파일에 갱신한다.
 
 ## License references
 

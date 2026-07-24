@@ -8,6 +8,8 @@ import { detectFaces, suggestTransformFromFace, type FaceDetectionResult } from 
 import { analyzeCanvas, type ImageHeuristics } from "@/features/image-core/analysis";
 import { buildPhotoChecks, type ResultCheck } from "@/features/image-core/checks";
 import { CheckList } from "@/components/result/CheckList";
+import { NextToolActions } from "@/components/result/NextToolActions";
+import { useImageTransfer } from "@/components/session/ImageTransferProvider";
 import { ToolStepper } from "./ToolStepper";
 import { UploadPanel } from "./UploadPanel";
 import { createOutputFilename, safeDownload } from "@/lib/files/names";
@@ -17,16 +19,18 @@ import { drawImageComposition, replaceEdgeBackground } from "@/lib/image/draw";
 import { exportPresetImage, type ExportFormat, type ExportResult } from "@/lib/image/export";
 import { defaultCropTransform, type CropTransform } from "@/lib/image/geometry";
 import { resolveBackgroundColor } from "@/lib/image/policy";
-import { getPreset } from "@/lib/presets";
+import type { ImagePreset } from "@/lib/presets/schema";
+import { getClientTool } from "@/config/client-tools";
 
 type Step = 1 | 2 | 3;
 type ResultState = ExportResult & { url: string; checks: ResultCheck[] };
 
 const emptyFace: FaceDetectionResult = { status: "unsupported", faces: [], message: "자동 얼굴 맞춤을 준비하고 있습니다." };
 
-export function PhotoWorkspace({ presetId }: { presetId: string }) {
-  const preset = getPreset(presetId);
-  if (!preset || !preset.output.width || !preset.output.height) throw new Error("사진 프리셋을 찾을 수 없습니다.");
+export function PhotoWorkspace({ preset }: { preset: ImagePreset }) {
+  if (!preset.output.width || !preset.output.height) throw new Error("사진 출력 규격을 찾을 수 없습니다.");
+  const tool = getClientTool(preset.id);
+  const { claimTransfer } = useImageTransfer();
   const [step, setStep] = useState<Step>(1);
   const [file, setFile] = useState<File | null>(null);
   const [decoded, setDecoded] = useState<DecodedImage | null>(null);
@@ -46,6 +50,8 @@ export function PhotoWorkspace({ presetId }: { presetId: string }) {
   const resultUrlRef = useRef<string | null>(null);
   const touchedRef = useRef(false);
   const dragRef = useRef<{ pointerId: number; x: number; y: number; startX: number; startY: number } | null>(null);
+  const transferClaimedRef = useRef(false);
+  const chooseFileRef = useRef<(file: File) => Promise<void>>(async () => undefined);
 
   const cleanupResult = useCallback(() => {
     if (resultUrlRef.current) URL.revokeObjectURL(resultUrlRef.current);
@@ -128,6 +134,14 @@ export function PhotoWorkspace({ presetId }: { presetId: string }) {
       if (task === taskRef.current) setBusy(false);
     }
   };
+  useEffect(() => { chooseFileRef.current = chooseFile; });
+
+  useEffect(() => {
+    if (transferClaimedRef.current) return;
+    transferClaimedRef.current = true;
+    const transferred = claimTransfer(preset.id);
+    if (transferred) queueMicrotask(() => void chooseFileRef.current(transferred));
+  }, [claimTransfer, preset.id]);
 
   const updateTransform = (update: Partial<CropTransform>, touched = true) => {
     if (touched) touchedRef.current = true;
@@ -273,7 +287,7 @@ export function PhotoWorkspace({ presetId }: { presetId: string }) {
         {step === 3 && result && (
           <div className="result-grid">
             <div className="result-preview"><img src={result.url} alt={`${preset.title} 완성 미리보기`} /><dl><div><dt>출력 크기</dt><dd>{result.width}×{result.height}px</dd></div><div><dt>파일 용량</dt><dd>{formatBytes(result.blob.size)}</dd></div><div><dt>파일 형식</dt><dd>{result.format === "jpeg" ? "JPG" : "PNG"}</dd></div><div><dt>DPI</dt><dd>{preset.output.dpi ? `${preset.output.dpi}dpi` : "해당 없음"}</dd></div></dl></div>
-            <div className="result-panel"><span className="eyebrow">기기 안에서 완성</span><h2>파일이 준비됐습니다.</h2><p>{copy.common.autoDisclaimer} {preset.category === "official" && copy.common.approvalDisclaimer}</p><CheckList checks={result.checks} />{!result.reachedTarget && <div className="warning-box">목표 용량을 맞추면 화질이 지나치게 낮아질 수 있어 더 줄이지 않았습니다. JPG를 선택하거나 다른 원본을 사용해 주세요.</div>}<div className="result-actions"><button type="button" className="button primary" onClick={download}><Download size={18} />{copy.common.download}</button><button type="button" className="button ghost" onClick={() => setStep(2)}>다시 조정</button><button type="button" className="button ghost" onClick={reset}>{copy.common.reset}</button></div>{preset.source && <div className="source-box"><strong>규격 출처</strong><br />{preset.source.authority} · {preset.source.title}<br />확인일 {preset.source.lastVerifiedAt} · <a href={preset.source.url} target="_blank" rel="noreferrer">공식 출처 열기</a></div>}</div>
+            <div className="result-panel"><span className="eyebrow">기기 안에서 완성</span><h2>파일이 준비됐습니다.</h2><p>{copy.common.autoDisclaimer} {preset.category === "official" && copy.common.approvalDisclaimer}</p><CheckList checks={result.checks} />{!result.reachedTarget && <div className="warning-box">목표 용량을 맞추면 화질이 지나치게 낮아질 수 있어 더 줄이지 않았습니다. JPG를 선택하거나 다른 원본을 사용해 주세요.</div>}<div className="result-actions"><button type="button" className="button primary" onClick={download}><Download size={18} />{copy.common.download}</button><button type="button" className="button ghost" onClick={() => setStep(2)}>다시 조정</button><button type="button" className="button ghost" onClick={reset}>{copy.common.reset}</button></div>{file && tool && <NextToolActions sourceToolId={tool.id} targetIds={tool.nextToolIds} asset={file} filename={file.name} />}{preset.source && <div className="source-box"><strong>규격 출처</strong><br />{preset.source.authority} · {preset.source.title}<br />확인일 {preset.source.lastVerifiedAt} · <a href={preset.source.url} target="_blank" rel="noreferrer">공식 출처 열기</a></div>}</div>
           </div>
         )}
       </div>

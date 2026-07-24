@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <rect width="1200" height="630" fill="#fbfaf7"/><circle cx="1070" cy="70" r="200" fill="#dcecff"/><circle cx="1135" cy="590" r="205" fill="#b9f4dc"/>
+  <rect x="72" y="68" width="1056" height="494" rx="46" fill="#fff" stroke="#dfe5e8" stroke-width="3"/>
+  <rect x="98" y="100" width="58" height="58" rx="18" fill="#14213d"/><circle cx="119" cy="121" r="8" fill="#ff725e"/><path d="M132 136h18v18h-18z" fill="#b9f4dc"/>
+  <text x="180" y="141" font-family="Apple SD Gothic Neo, Arial, sans-serif" font-size="28" font-weight="700" fill="#137b64">픽셀핏 가이드 · 공식 사진</text>
+  <text x="98" y="292" font-family="Apple SD Gothic Neo, Arial, sans-serif" font-size="64" font-weight="800" fill="#14213d">증명사진 크기</text>
+  <text x="98" y="378" font-family="Apple SD Gothic Neo, Arial, sans-serif" font-size="72" font-weight="800" fill="#14213d">3×4 · 3.5×4.5cm</text>
+  <text x="100" y="458" font-family="Apple SD Gothic Neo, Arial, sans-serif" font-size="28" fill="#5e6878">관행값과 공식 물리 크기를 구분하는 법</text><rect x="98" y="492" width="286" height="7" rx="4" fill="#ff725e"/>
+</svg>

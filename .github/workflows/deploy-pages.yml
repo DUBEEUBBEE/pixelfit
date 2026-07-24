@@ -18,6 +18,25 @@ jobs:
   build:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    env:
+      NEXT_PUBLIC_CUSTOM_DOMAIN: ${{ vars.NEXT_PUBLIC_CUSTOM_DOMAIN }}
+      CUSTOM_DOMAIN: ${{ vars.CUSTOM_DOMAIN }}
+      NEXT_PUBLIC_CONTACT_EMAIL: ${{ vars.NEXT_PUBLIC_CONTACT_EMAIL }}
+      CONTACT_EMAIL: ${{ vars.CONTACT_EMAIL }}
+      NEXT_PUBLIC_CONTACT_URL: ${{ vars.NEXT_PUBLIC_CONTACT_URL }}
+      CONTACT_URL: ${{ vars.CONTACT_URL }}
+      NEXT_PUBLIC_OPERATOR_NAME: ${{ vars.NEXT_PUBLIC_OPERATOR_NAME }}
+      OPERATOR_NAME: ${{ vars.OPERATOR_NAME }}
+      NEXT_PUBLIC_ADSENSE_ENABLED: ${{ vars.NEXT_PUBLIC_ADSENSE_ENABLED }}
+      ADSENSE_ENABLED: ${{ vars.ADSENSE_ENABLED }}
+      NEXT_PUBLIC_ADSENSE_CLIENT: ${{ vars.NEXT_PUBLIC_ADSENSE_CLIENT }}
+      ADSENSE_CLIENT: ${{ vars.ADSENSE_CLIENT }}
+      NEXT_PUBLIC_ADSENSE_CONTENT_SLOT: ${{ vars.NEXT_PUBLIC_ADSENSE_CONTENT_SLOT }}
+      ADSENSE_CONTENT_SLOT: ${{ vars.ADSENSE_CONTENT_SLOT }}
+      GOOGLE_SITE_VERIFICATION: ${{ vars.GOOGLE_SITE_VERIFICATION }}
+      NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION: ${{ vars.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION }}
+      NAVER_SITE_VERIFICATION: ${{ vars.NAVER_SITE_VERIFICATION }}
+      NEXT_PUBLIC_NAVER_SITE_VERIFICATION: ${{ vars.NEXT_PUBLIC_NAVER_SITE_VERIFICATION }}
 
     steps:
       - name: Checkout
@@ -40,11 +59,24 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Build custom domain root
-        env:
-          NEXT_PUBLIC_BASE_PATH: ""
-          NEXT_PUBLIC_SITE_URL: https://pixelfit.o-r.kr
-        run: pnpm build
+      - name: Select Pages URL mode
+        shell: bash
+        run: |
+          DOMAIN="${NEXT_PUBLIC_CUSTOM_DOMAIN:-${CUSTOM_DOMAIN:-pixelfit.o-r.kr}}"
+          if [[ ! "$DOMAIN" =~ ^([A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?\.)+[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?$ ]]; then
+            echo "CUSTOM_DOMAIN must be a bare DNS hostname." >&2
+            exit 1
+          fi
+          echo "NEXT_PUBLIC_CUSTOM_DOMAIN=$DOMAIN" >> "$GITHUB_ENV"
+          echo "CUSTOM_DOMAIN=$DOMAIN" >> "$GITHUB_ENV"
+          echo "NEXT_PUBLIC_SITE_URL=https://$DOMAIN" >> "$GITHUB_ENV"
+          echo "NEXT_PUBLIC_BASE_PATH=" >> "$GITHUB_ENV"
+
+      - name: Build custom-domain static site
+        run: pnpm build:deploy
+
+      - name: Verify static export contract
+        run: pnpm verify:export
 
       - name: Upload static export
         uses: actions/upload-pages-artifact@v4

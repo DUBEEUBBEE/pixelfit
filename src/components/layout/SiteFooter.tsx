@@ -15,6 +15,8 @@ export function SiteFooter() {
             <Link href="/privacy">개인정보 안내</Link>
             <Link href="/terms">이용약관</Link>
             <Link href="/guide">사용 가이드</Link>
+            <Link href="/about">픽셀핏 소개</Link>
+            <Link href="/contact">문의</Link>
           </nav>
         </div>
         <div className="footer-bottom">

@@ -7,6 +7,9 @@ import { createOutputFilename, safeDownload } from "@/lib/files/names";
 import { formatBytes, validateImageFile } from "@/lib/files/validation";
 import { ToolStepper } from "./ToolStepper";
 import { UploadPanel } from "./UploadPanel";
+import { useImageTransfer } from "@/components/session/ImageTransferProvider";
+import { NextToolActions } from "@/components/result/NextToolActions";
+import { getClientTool } from "@/config/client-tools";
 
 const categoryCopy: Record<MetadataCategory, { label: string; description: string }> = {
   gps: { label: "GPS 위치", description: "촬영 위치 좌표와 관련 정보" },
@@ -23,6 +26,8 @@ const categoryCopy: Record<MetadataCategory, { label: string; description: strin
 type Result = MetadataCleanResult & { blob: Blob };
 
 export function PrivacyWorkspace() {
+  const { claimTransfer } = useImageTransfer();
+  const tool = getClientTool("photo-privacy-cleaner");
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [file, setFile] = useState<File | null>(null);
   const [bytes, setBytes] = useState<Uint8Array | null>(null);
@@ -32,6 +37,8 @@ export function PrivacyWorkspace() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const taskRef = useRef(0);
+  const chooseRef = useRef<(file: File) => Promise<void>>(async () => undefined);
+  const claimedRef = useRef(false);
 
   useEffect(() => () => { taskRef.current += 1; }, []);
 
@@ -51,6 +58,13 @@ export function PrivacyWorkspace() {
       setError(caught instanceof Error ? caught.message : "메타데이터를 읽을 수 없습니다. 다른 파일을 선택해 주세요.");
     } finally { if (task === taskRef.current) setBusy(false); }
   };
+  useEffect(() => { chooseRef.current = choose; });
+  useEffect(() => {
+    if (claimedRef.current) return;
+    claimedRef.current = true;
+    const transferred = claimTransfer("photo-privacy-cleaner");
+    if (transferred) queueMicrotask(() => void chooseRef.current(transferred));
+  }, [claimTransfer]);
 
   const toggle = (category: MetadataCategory) => setSelected((current) => {
     const next = new Set(current);
@@ -103,7 +117,7 @@ export function PrivacyWorkspace() {
       </div>}
       {step === 3 && result && inspection && <div className="result-grid">
         <div className="result-preview"><span className="icon-well" style={{ margin: "2rem auto" }}><FileCheck2 size={28} /></span><h2 style={{ margin: 0 }}>재검사 완료</h2><dl><div><dt>원본</dt><dd>{formatBytes(result.report.inputBytes)}</dd></div><div><dt>결과</dt><dd>{formatBytes(result.report.outputBytes)}</dd></div><div><dt>픽셀 재인코딩</dt><dd>없음</dd></div><div><dt>화질 변화 예상</dt><dd>없음</dd></div></dl></div>
-        <div className="result-panel"><span className="eyebrow">선택 항목 재검사</span><h2>{result.report.removedFields.length > 0 ? `${result.report.removedFields.length}개 필드를 정리했습니다.` : "제거할 알려진 필드가 없었습니다."}</h2><p>원본을 덮어쓰지 않고 새 파일로 저장합니다.</p><div className="check-list"><div className="check-item pass"><span className="check-icon"><Check size={14} /></span><div><strong>압축 픽셀 payload 유지</strong><span>파일을 재인코딩하지 않았습니다.</span></div></div><div className={`check-item ${result.report.remainingSelectedCategories.length === 0 ? "pass" : "warning"}`}><span className="check-icon">{result.report.remainingSelectedCategories.length === 0 ? <Check size={14} /> : <ShieldAlert size={14} />}</span><div><strong>선택 항목 재검사</strong><span>{result.report.remainingSelectedCategories.length === 0 ? "선택한 범주의 알려진 필드가 남지 않았습니다." : `${result.report.remainingSelectedCategories.map((item) => categoryCopy[item].label).join(", ")} 일부가 안전상 남아 있습니다.`}</span></div></div><div className="check-item info"><span className="check-icon"><Info size={14} /></span><div><strong>방향·DPI·ICC·알파</strong><span>{result.report.preservation.orientationPreserved && result.report.preservation.densityPreserved && result.report.preservation.colorProfilePreserved && result.report.preservation.alphaPreserved ? "감지된 보존 대상의 바이트 지문이 유지됐습니다." : "일부 보존 항목을 확인하지 못했습니다. 다운로드 후 표시를 확인하세요."}</span></div></div></div>{result.report.provenanceMayBeInvalidated && <div className="warning-box">출처 정보 바이트를 제거하지 않았지만 파일 변경으로 콘텐츠 자격 증명이 유효하지 않게 될 수 있습니다.</div>}{result.report.warnings.map((warning) => <div className="warning-box" key={warning} style={{ marginTop: ".5rem" }}>{warning}</div>)}{error && <div className="error-box" role="alert">{error}</div>}<div className="result-actions"><button className="button primary" type="button" onClick={download}><Download size={18} />정리된 파일 다운로드</button><button className="button ghost" type="button" onClick={() => setStep(2)}>선택 바꾸기</button><button className="button ghost" type="button" onClick={reset}>처음부터 다시</button></div></div>
+        <div className="result-panel"><span className="eyebrow">선택 항목 재검사</span><h2>{result.report.removedFields.length > 0 ? `${result.report.removedFields.length}개 필드를 정리했습니다.` : "제거할 알려진 필드가 없었습니다."}</h2><p>원본을 덮어쓰지 않고 새 파일로 저장합니다.</p><div className="check-list"><div className="check-item pass"><span className="check-icon"><Check size={14} /></span><div><strong>압축 픽셀 payload 유지</strong><span>파일을 재인코딩하지 않았습니다.</span></div></div><div className={`check-item ${result.report.remainingSelectedCategories.length === 0 ? "pass" : "warning"}`}><span className="check-icon">{result.report.remainingSelectedCategories.length === 0 ? <Check size={14} /> : <ShieldAlert size={14} />}</span><div><strong>선택 항목 재검사</strong><span>{result.report.remainingSelectedCategories.length === 0 ? "선택한 범주의 알려진 필드가 남지 않았습니다." : `${result.report.remainingSelectedCategories.map((item) => categoryCopy[item].label).join(", ")} 일부가 안전상 남아 있습니다.`}</span></div></div><div className="check-item info"><span className="check-icon"><Info size={14} /></span><div><strong>방향·DPI·ICC·알파</strong><span>{result.report.preservation.orientationPreserved && result.report.preservation.densityPreserved && result.report.preservation.colorProfilePreserved && result.report.preservation.alphaPreserved ? "감지된 보존 대상의 바이트 지문이 유지됐습니다." : "일부 보존 항목을 확인하지 못했습니다. 다운로드 후 표시를 확인하세요."}</span></div></div></div>{result.report.provenanceMayBeInvalidated && <div className="warning-box">출처 정보 바이트를 제거하지 않았지만 파일 변경으로 콘텐츠 자격 증명이 유효하지 않게 될 수 있습니다.</div>}{result.report.warnings.map((warning) => <div className="warning-box" key={warning} style={{ marginTop: ".5rem" }}>{warning}</div>)}{error && <div className="error-box" role="alert">{error}</div>}<div className="result-actions"><button className="button primary" type="button" onClick={download}><Download size={18} />정리된 파일 다운로드</button><button className="button ghost" type="button" onClick={() => setStep(2)}>선택 바꾸기</button><button className="button ghost" type="button" onClick={reset}>처음부터 다시</button></div>{tool && <NextToolActions sourceToolId={tool.id} targetIds={tool.nextToolIds} asset={result.blob} filename={createOutputFilename("photo-privacy-cleaner", inspection.format === "jpeg" ? "jpeg" : inspection.format)} />}</div>
       </div>}
     </div>
   </section>;

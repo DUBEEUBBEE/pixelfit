@@ -1,5 +1,7 @@
 import { detectImageType, typeFromMime, type SupportedImageType } from "./signatures";
 
+export const MAX_IMAGE_EDGE = 16_384;
+
 export class ImageValidationError extends Error {
   constructor(
     public readonly code: "empty" | "too-large" | "unsupported" | "mismatch" | "decode" | "too-many-pixels",
@@ -28,6 +30,9 @@ export async function validateImageFile(file: File, maxBytes = 25 * 1024 * 1024)
 export function validatePixelCount(width: number, height: number, maxPixels = 40_000_000): void {
   if (!Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0) {
     throw new ImageValidationError("decode", "사진 크기를 확인할 수 없습니다. 다른 파일을 선택해 주세요.");
+  }
+  if (width > MAX_IMAGE_EDGE || height > MAX_IMAGE_EDGE) {
+    throw new ImageValidationError("too-many-pixels", `사진의 한 변이 너무 깁니다. 가로와 세로를 각각 ${MAX_IMAGE_EDGE.toLocaleString("ko-KR")}px 이하로 줄여 다시 선택해 주세요.`);
   }
   if (width * height > maxPixels) {
     throw new ImageValidationError("too-many-pixels", "사진 해상도가 너무 커 기기 메모리가 부족할 수 있습니다. 4천만 픽셀 이하로 줄여 다시 선택해 주세요.");

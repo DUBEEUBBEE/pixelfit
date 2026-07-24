@@ -114,7 +114,7 @@ const rawPresets = [
     checks: [{ id: "dimensions", label: "2560×1440px 출력", automated: true }, { id: "filesize", label: "6MB 이하", automated: true }, { id: "safe-area", label: "텍스트·로고 안전영역", automated: false }],
     faqs: [
       { question: "모바일에서도 같은 영역이 보이나요?", answer: "화면에 예상 크롭을 보여드리지만 기기와 YouTube UI에 따라 실제 표시가 달라질 수 있습니다." },
-      { question: "텍스트를 추가할 수 있나요?", answer: "v1은 업로드한 사진이나 로고 배치에 집중하며 범용 텍스트 편집기는 포함하지 않습니다." },
+      { question: "텍스트를 추가할 수 있나요?", answer: "현재 도구는 업로드한 사진이나 로고 배치에 집중하며 범용 텍스트 편집기는 포함하지 않습니다." },
     ],
     limitations: ["기기별 미리보기는 공식 최소 안전영역을 비율 환산한 예상치입니다."],
   },
@@ -142,10 +142,10 @@ const rawPresets = [
     ],
     checks: [{ id: "square", label: "1:1 정사각형", automated: true }, { id: "zip", label: "필수 파일과 크기", automated: true }],
     faqs: [
-      { question: "사진이 벡터 SVG로 바뀌나요?", answer: "아니요. raster 입력을 벡터로 변환했다고 주장하지 않으며 v1 ZIP에는 가짜 SVG를 넣지 않습니다." },
+      { question: "사진이 벡터 SVG로 바뀌나요?", answer: "아니요. raster 입력을 벡터로 변환했다고 주장하지 않으며 결과 ZIP에는 가짜 SVG를 넣지 않습니다." },
       { question: "ICO 안에 어떤 크기가 들어가나요?", answer: "16, 32, 48px PNG 프레임을 담은 멀티사이즈 ICO를 생성합니다." },
     ],
-    limitations: ["복잡한 원본은 16px에서 식별하기 어려울 수 있습니다.", "v1 입력은 안전한 raster JPEG·PNG·WebP로 제한합니다."],
+    limitations: ["복잡한 원본은 16px에서 식별하기 어려울 수 있습니다.", "현재 입력은 안전한 raster JPEG·PNG·WebP로 제한합니다."],
   },
   {
     id: "photo-privacy-cleaner",
@@ -164,7 +164,7 @@ const rawPresets = [
     faqs: [
       { question: "사진 화질이 바뀌나요?", answer: "지원 형식에서는 픽셀 payload를 다시 인코딩하지 않고 메타데이터 구역만 정리합니다." },
       { question: "Content Credentials도 지우나요?", answer: "아니요. 알려진 C2PA·JUMBF 등 출처 정보는 제거 대상으로 제공하지 않습니다." },
-      { question: "HEIC도 지원하나요?", answer: "v1은 안정성과 번들 크기 때문에 JPEG·PNG·WebP만 지원하며 외부 변환 서버를 사용하지 않습니다." },
+      { question: "HEIC도 지원하나요?", answer: "현재는 안정성과 번들 크기 때문에 JPEG·PNG·WebP만 지원하며 외부 변환 서버를 사용하지 않습니다." },
     ],
     limitations: ["알 수 없는 제조사 전용 메타데이터를 모두 식별한다고 보장하지 않습니다.", "파일 수정은 기존 콘텐츠 자격 증명의 유효성에 영향을 줄 수 있습니다."],
   },

@@ -1,6 +1,19 @@
-# 픽셀핏 v1 구현 계획
+# 픽셀핏 구현 계획
 
-기준일: 2026-07-22
+기준일: 2026-07-23
+
+## v2 확장 마일스톤
+
+현재 v1 계약을 보존하면서 아래 순서로 사이트 신뢰·검색 정보·콘텐츠·도구 범위를 확장한다. 각 우선순위는 구현 직후 관련 검사와 `STATUS.md` 기록까지 끝나야 닫힌다.
+
+- [x] P0: 중앙 환경 검증, URL/trailing-slash 정책, 커스텀 도메인 준비, About/Contact/정책 페이지
+- [x] P1: 도구 SEO 레지스트리, OG 이미지, 구조화 데이터, 사이트맵, 8개 독립 가이드
+- [x] P2: 기본 비활성 AdSense 구성·검증·안전한 수동 슬롯과 운영 문서
+- [x] P3: 압축·리사이즈·형식 변환·소셜 이미지 묶음 도구
+- [x] P4: YouTube 썸네일·네컷 사진·필름 사진 도구와 메모리 전용 다음 도구 전달
+- [x] P5: 홈 카테고리·별칭 검색·내부 링크, 접근성·성능, 이중 빌드와 최종 QA
+
+커밋·푸시·배포, Search Console 변경, DNS·AdSense 계정·CMP 같은 외부 운영 변경은 이 계획의 로컬 구현 범위에 포함하지 않는다.
 
 이 문서는 작업 순서와 완료 조건을 정의한다. 실제 완료 여부와 실행 결과는 [STATUS.md](./STATUS.md)에만 기록한다. 선행 마일스톤의 필수 검사가 실패하면 다음 마일스톤을 완료 처리하지 않는다.
 
@@ -15,6 +28,9 @@ pnpm lint
 pnpm typecheck
 pnpm test
 pnpm build
+pnpm build:pages
+pnpm build:custom:test
+pnpm verify:export
 pnpm test:e2e
 pnpm test:a11y
 pnpm check
@@ -22,9 +38,13 @@ pnpm check
 
 `pnpm check`는 lint, typecheck, unit/component test, build를 묶지만 Playwright E2E는 별도 실행한다.
 
+## 공개 v1 구현 계획 — 보존 기록
+
+아래 M0~M10은 2026-07-22 공개 v1의 구현 순서를 보존한다. v2 완료 상태와 현재 수치는 위 P0~P5 및 [STATUS.md](./STATUS.md)를 따른다.
+
 ## M0. 저장소 분석과 설계
 
-상태: 진행 중
+상태: 완료 — 공개 v1 기록
 
 작업:
 
@@ -72,7 +92,7 @@ pnpm check
 - Zod schema와 여섯 프리셋, cm→px 유틸리티를 만든다.
 - slug·출력값·공식 출처·allow/forbid 충돌 불변식을 검증한다.
 - 도구/개인정보/약관/가이드/404, sitemap, robots, metadata와 구조화 데이터를 만든다.
-- 실제 화면 FAQ만 FAQ 구조화 데이터에 반영한다.
+- 화면 FAQ는 유지하되 현재 검색 정책에 실익이 없는 `FAQPage` JSON-LD는 생성하지 않는다.
 
 완료 조건:
 

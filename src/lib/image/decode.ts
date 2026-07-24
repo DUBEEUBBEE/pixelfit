@@ -27,7 +27,15 @@ export async function decodeImage(file: Blob, maxPixels = 40_000_000): Promise<D
       element.src = url;
     });
     validatePixelCount(image.naturalWidth, image.naturalHeight, maxPixels);
-    return { source: image, width: image.naturalWidth, height: image.naturalHeight, close: () => URL.revokeObjectURL(url) };
+    return {
+      source: image,
+      width: image.naturalWidth,
+      height: image.naturalHeight,
+      close: () => {
+        image.removeAttribute("src");
+        URL.revokeObjectURL(url);
+      },
+    };
   } catch {
     URL.revokeObjectURL(url);
     throw new Error("사진을 해석할 수 없습니다. 손상되지 않은 JPEG, PNG 또는 WebP 파일을 다시 선택해 주세요.");
