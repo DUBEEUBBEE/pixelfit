@@ -1,17 +1,17 @@
 # 픽셀핏 상태
 
-스냅샷: 2026-07-24 KST
+스냅샷: 2026-07-25 KST
 
-이 문서는 공개 v1과 로컬 v2 RC를 분리하고, 실행한 검사만 `PASS`로 기록한다. 실기기 Safari, GitHub-hosted v2 workflow, 공개 v2처럼 실행하지 않은 항목은 `NOT_TESTED`로 남긴다.
+이 문서는 공개 v1, 로컬 v2 RC, 공개 v2를 분리하고 실행한 검사만 `PASS`로 기록한다. 실기기 Safari처럼 실행하지 않은 항목은 `NOT_TESTED`로 남긴다.
 
-## v2 custom-domain SEO·AdSense 준비 — 2026-07-24
+## 공개 v2 custom-domain SEO·AdSense 상태 — 2026-07-25
 
-이 절은 아래 2026-07-23 로컬 RC·구현 기록보다 최신이며, 아직 최종 commit·GitHub-hosted 배포·공개 v2 승인 기록은 아니다.
+이 절은 아래 2026-07-23 로컬 RC·구현 기록보다 최신이며, `f7657dc`까지의 GitHub-hosted 배포와 공개 확인 결과를 기록한다.
 
 - production custom host를 `pixelfit.o-r.kr`로 고정하고, 기본 `pnpm build`와 Pages workflow가 HTTPS root canonical·빈 base path 계약을 사용하도록 정리했다. `/pixelfit` mode는 회귀 검사용 `pnpm build:pages`에 남겼다.
 - 홈 제목의 의도된 줄을 `용도를 고르고` / `사진만 올리세요.`로 고정했다.
 - 구조화 데이터는 홈 `WebSite`, 가이드 허브 `ItemList`, 도구 `BreadcrumbList`, 가이드 상세 `BreadcrumbList`와 `Article`만 남겼다. 실제 price·review·rating 근거가 없는 `WebApplication`/`SoftwareApplication`과 rich-result 오인을 제거했다.
-- `NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION`과 호환 `GOOGLE_SITE_VERIFICATION`으로 Search Console URL-prefix HTML 확인 meta를 만들 수 있다. 토큰 배포는 소유권 승인이나 sitemap 제출 완료를 뜻하지 않는다.
+- `NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION`과 호환 `GOOGLE_SITE_VERIFICATION`으로 Search Console URL-prefix HTML 확인 meta를 만든다. 실제 토큰을 저장소 변수로 배포해 URL-prefix 소유권을 확인했고 sitemap 처리 결과도 별도로 확인했다.
 - 유효한 실제 AdSense client가 있으면 광고 OFF 상태에서도 `google-adsense-account` meta와 custom-root `ads.txt`를 만들 수 있도록 계정 확인을 광고 제공 게이트와 분리했다. 광고 loader와 slot은 enabled/client/slot이 모두 유효한 경우에만 가능하며 production에서는 계속 OFF다.
 - 개인정보 문서는 광고가 활성화될 경우의 제3자 cookie·web beacon·IP/식별자, Google 설정 링크와 CMP 전제 조건을 명시하도록 보강했다.
 
@@ -22,13 +22,14 @@
 | `pnpm test:e2e` | `PASS` — 46 cases 중 45 passed, 대표 viewport를 한 Chromium context에서 순회하는 중복 mobile-project case 1 skipped |
 | axe serious/critical | `PASS` — Chromium desktop/mobile의 홈·대표 도구·편집 결과에서 0 |
 | 제목·모바일 메뉴 화면 | `PASS` — 1440·1024·390·320px에서 지정한 두 줄과 가로 overflow 0, 320px 수동 화면 캡처 확인 |
+| GitHub-hosted CI·Pages | `PASS` — `f7657dc`의 CI `30121150418`과 Pages `30121150421` 성공 |
 | AdSense 계정 확인 전용 test build | `PASS` — 광고 OFF에서 account meta·custom `ads.txt` 생성, loader·slot marker 0; 테스트 ID 제거 후 실제 OFF 산출물 복원 |
 | `pixelfit.o-r.kr` DNS | `PASS` — GitHub Pages를 가리킴 |
-| `pixelfit.o-r.kr` strict HTTPS | `FAIL/PENDING` — 2026-07-24 확인 시 `*.github.io` 인증서만 제공되어 호스트명 검증 실패 |
-| Search Console URL-prefix 소유권·sitemap | `NOT_TESTED` — 유효한 HTTPS와 실제 token 배포 후 진행 |
-| AdSense 사이트 등록 | `BLOCKED` — `pixelfit.o-r.kr`은 PSL에 등록된 플랫폼 하위 도메인이 아닌 `o-r.kr`의 일반 하위 도메인이고 상위 `o-r.kr/ads.txt` 제어권이 없음 |
+| `pixelfit.o-r.kr` strict HTTPS | `PASS` — SAN에 `pixelfit.o-r.kr`이 포함된 Let's Encrypt 인증서, strict TLS 200, HTTP→HTTPS 301, Pages `https_enforced=true` |
+| Search Console URL-prefix 소유권·sitemap | `PASS` — HTML meta로 `https://pixelfit.o-r.kr/` 소유권 확인, `/sitemap.xml` 처리 완료, 27페이지 발견 |
+| AdSense 사이트 등록 | `BLOCKED` — 라이브 계정에서 `pixelfit.o-r.kr`을 저장하면 올바른 최상위 도메인이 아니라며 `o-r.kr`을 제안한다. 소유하지 않은 상위 도메인은 등록하지 않았고 사이트·광고 제공은 추가하지 않았다. |
 
-Search Console은 GitHub Pages 인증서가 `pixelfit.o-r.kr`에 유효해진 뒤 URL-prefix HTML meta 방식으로 진행한다. AdSense는 별개로 운영자가 제어하는 등록 가능 루트 도메인을 확보해야 하며, 현재 주소나 상위 `o-r.kr`의 소유권을 가장해 등록하지 않는다.
+Search Console 등록은 완료됐다. AdSense는 별개로 운영자가 제어하는 등록 가능 루트 도메인을 확보한 뒤 그 도메인의 DNS, HTTPS, Search Console, root `ads.txt`, AdSense review와 CMP를 다시 진행해야 한다. 현재 주소나 상위 `o-r.kr`의 소유권을 가장해 등록하지 않으며 광고는 계속 OFF다.
 
 ## v2 확장 기준선 — 2026-07-23 01:47~01:49 KST
 
