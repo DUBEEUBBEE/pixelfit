@@ -1,26 +1,26 @@
 # SEO operations
 
-Last verified: 2026-07-24
+Last verified: 2026-07-25
 
 This document separates build-time SEO readiness from external search-engine operations. Source changes do not prove crawling, indexing, rich-result eligibility, ranking, or ownership verification.
 
 ## Canonical URL modes
 
 - Project Pages: origin and path base `https://dubeeubbee.github.io/pixelfit`, asset base `/pixelfit`.
-- Production custom domain: origin `https://pixelfit.o-r.kr`, asset base empty.
+- Production custom-domain candidate: origin `https://pixelfit.me`, asset base empty.
 - Generic custom-domain test: origin `https://<CUSTOM_DOMAIN>`, asset base empty.
 
 `src/config/env.ts` validates both modes, and `src/config/brand.ts` is the shared source for canonical URLs and public asset paths. Next static export uses trailing slashes for page routes. Both modes must be built and inspected before a domain migration.
 
-The project Pages canonical URL is a `/pixelfit/` subpath on `github.io`. Its `WebSite` JSON-LD can describe the deployed site, but it cannot establish PixelFit as the root-domain site name for `github.io`. The production build now emits root canonical URLs for `pixelfit.o-r.kr`; search engines still decide whether to display that site name.
+The project Pages canonical URL is a `/pixelfit/` subpath on `github.io`. Its `WebSite` JSON-LD can describe the deployed site, but it cannot establish PixelFit as the root-domain site name for `github.io`. The production candidate build emits root canonical URLs for `pixelfit.me`; search engines still decide whether to display that site name.
 
-At the 2026-07-24 verification point, DNS resolved to GitHub Pages but the served certificate did not validate `pixelfit.o-r.kr`. Do not submit ownership verification, claim a successful migration, or use a browser certificate bypass. Wait for GitHub Pages certificate provisioning and confirm strict HTTPS, HTTP-to-HTTPS redirect, canonical URLs, sitemap, and public assets again.
+The existing `pixelfit.o-r.kr` deployment, HTTPS and Search Console property are evidence for the previous host only. Keep it available until `pixelfit.me` registration, Pages custom-domain setting, DNS, certificate provisioning, strict HTTPS, canonical URLs, sitemap and public assets have been verified. Because one Pages site can have only one custom domain, preserving the previous address after the switch requires a separately operated redirect endpoint; changing the canonical alone is not a redirect.
 
 ## Search verification tokens
 
 `NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION` is optional and validated as a plain token. The compatibility alias `GOOGLE_SITE_VERIFICATION` is also accepted, but the public value wins if both differ. A valid value renders the `google-site-verification` meta used by a Google Search Console URL-prefix property.
 
-Use the URL-prefix property `https://pixelfit.o-r.kr/` and HTML-tag verification for the current host. A Domain property requires DNS verification; adding a TXT record at the same owner name as the existing CNAME is not a viable DNS layout. The meta tag avoids changing that DNS ownership record. It remains only a technical prerequisite: after strict HTTPS is valid, the operator must add the property, deploy the real token, click verification, and submit `https://pixelfit.o-r.kr/sitemap.xml` in the live Search Console account.
+For the new host, either verify a Domain property for `pixelfit.me` through an apex DNS TXT record or add the URL-prefix property `https://pixelfit.me/` and use the validated HTML meta token. The generated meta remains only a technical prerequisite: after strict HTTPS is valid, the operator must add and verify the new property and submit `https://pixelfit.me/sitemap.xml` in the live Search Console account. Preserve the previous `https://pixelfit.o-r.kr/` property as migration history; do not mark the new property complete from the old result.
 
 `NEXT_PUBLIC_NAVER_SITE_VERIFICATION` is also optional and the legacy alias `NAVER_SITE_VERIFICATION` remains accepted. A local or deployed verification meta does not prove that either search service accepted ownership.
 

@@ -8,7 +8,8 @@
 | --- | --- | --- |
 | 공개 v1 | `PASS` 기록 보존 | 2026-07-22 `https://dubeeubbee.github.io/pixelfit/`에 배포한 기존 6개 도구 릴리스 |
 | 2026-07-23 로컬 v2 RC | `PASS` 기록 보존 | 13개 도구·8개 가이드, 단위 131개·브라우저 44개·접근성 4개·이중 export·Lighthouse 로컬 검증 완료 |
-| 2026-07-24 custom-domain 후보 | `IN_PROGRESS` | SEO·소유권·AdSense 안전 계약 수정 중. DNS는 GitHub Pages를 가리키지만 `pixelfit.o-r.kr` HTTPS 인증서는 아직 유효하지 않고 최종 build·배포·공개 검증은 남음 |
+| 2026-07-25 기존 custom domain | `PASS` 기록 보존 | `https://pixelfit.o-r.kr/`의 공개 배포·HTTPS·Search Console 확인 완료. AdSense 사이트 등록은 registrable root가 아니어서 차단 |
+| 2026-07-25 `pixelfit.me` 전환 후보 | `IN_PROGRESS` | 등록·DNS 레코드·repository variable·Pages custom domain과 로컬 후보 검증 완료. 공개 DNS 위임·TLS·새 artifact 배포·검색/광고 계정 확인은 진행 중 |
 
 공개 v1의 성공 기록은 v2 RC의 공개 배포 증거가 아니다. 명령별 실제 결과와 미실행 항목은 [현재 상태](./docs/STATUS.md), 출시 경계는 [출시 체크리스트](./docs/RELEASE_CHECKLIST.md)를 기준으로 확인한다.
 
@@ -110,7 +111,7 @@ GitHub project Pages 후보는 실제 하위 경로와 canonical을 주입하고
 pnpm build:pages
 ```
 
-기본 production build는 현재 실제 custom domain인 `pixelfit.o-r.kr`의 HTTPS root 계약으로 빌드하고 export verifier까지 실행한다.
+기본 production build는 새 canonical 후보 `pixelfit.me`의 HTTPS root 계약으로 빌드하고 export verifier까지 실행한다. 이 로컬 기본값은 도메인 등록, DNS, GitHub Pages Settings 또는 공개 전환 완료의 증거가 아니다.
 
 ```bash
 pnpm build
@@ -142,7 +143,7 @@ pnpm check
 pnpm preview
 ```
 
-`pnpm check`는 lint, typecheck, unit/component test, project Pages build와 실제 `pixelfit.o-r.kr` custom-root build를 실행하며 E2E와 접근성 검사를 포함하지 않는다. 2026-07-23 로컬 RC는 Vitest 131/131, Playwright Chromium/WebKit 44/44, axe 4/4, Pages/custom verifier를 통과했다. Lighthouse mobile 기본 설정의 대표 5경로는 Performance 99~100, 나머지 세 범주 100, CLS 0이었다. 이후 변경의 최종 수치는 [현재 상태](./docs/STATUS.md)에 별도로 기록한다.
+`pnpm check`는 lint, typecheck, unit/component test, project Pages build와 `pixelfit.me` custom-root 후보 build를 실행하며 E2E와 접근성 검사를 포함하지 않는다. 2026-07-23 로컬 RC는 Vitest 131/131, Playwright Chromium/WebKit 44/44, axe 4/4, Pages/custom verifier를 통과했다. Lighthouse mobile 기본 설정의 대표 5경로는 Performance 99~100, 나머지 세 범주 100, CLS 0이었다. 이후 변경의 최종 수치는 [현재 상태](./docs/STATUS.md)에 별도로 기록한다.
 
 `pnpm preview`는 static export인 `out/`을 제공한다. `next start`는 이 프로젝트의 배포 모드가 아니다.
 
@@ -151,7 +152,7 @@ pnpm preview
 - AdSense 광고 게이트는 기본 OFF다. `ADSENSE_ENABLED=true`, 유효한 client와 slot이 모두 있을 때만 광고 스크립트와 슬롯을 렌더링한다.
 - 유효한 실제 publisher client는 광고가 OFF여도 `google-adsense-account` meta와 custom-root `ads.txt`를 생성할 수 있다. 이는 계정·사이트 연결용 기술 표면일 뿐 광고 활성화나 승인을 뜻하지 않는다.
 - 허용 위치는 홈 콘텐츠 구분, 가이드 콘텐츠 구분, 도구 설명 끝뿐이다. 업로드·편집·미리보기·결과·다운로드·내비게이션·privacy·terms·contact에는 광고를 두지 않는다.
-- `pixelfit.o-r.kr`은 Public Suffix List에 등록된 플랫폼 하위 도메인이 아니라 `o-r.kr` 아래의 일반 하위 도메인이다. Google의 사이트 URL 규칙상 이 주소만으로 AdSense 사이트 등록을 완료할 수 없고, 상위 `o-r.kr/ads.txt`도 이 프로젝트가 제어하지 못한다. AdSense에는 운영자가 소유·제어하는 등록 가능 루트 도메인이 필요하다.
+- 기존 `pixelfit.o-r.kr`은 Public Suffix List에 등록된 플랫폼 하위 도메인이 아니라 `o-r.kr` 아래의 일반 하위 도메인이어서 AdSense 사이트 등록이 차단됐다. 새 후보 `pixelfit.me`는 registrable root 형식이지만, 실제 등록·소유권·공개 root `ads.txt`·AdSense 사이트 추가와 review 성공은 외부 증거로 따로 확인해야 한다.
 - 동의 관리 플랫폼(CMP), AdSense 계정·사이트 승인, 정책 검토, 루트 `ads.txt` 확인은 외부 운영 작업이다. 저장소가 자동 완료했다고 주장하지 않으며, 완료 전에는 광고 스크립트를 OFF로 유지한다.
 - Naver 소유권 meta는 유효한 토큰을 명시한 빌드에서만 생성한다.
 - Google Search Console은 유효한 `NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION` 또는 호환 변수가 있으면 URL-prefix 속성용 HTML meta를 생성한다. 실제 속성 추가, 확인과 sitemap 제출 성공은 공개 HTTPS가 유효한 상태에서 별도로 확인해야 한다.
@@ -178,9 +179,9 @@ pnpm preview
 
 ## GitHub Pages 배포 주의
 
-`.github/workflows/deploy-pages.yml`은 `main` push 또는 수동 실행에서 custom-domain root 모드만 사용한다. repository variable이 비어 있으면 `pixelfit.o-r.kr`을 명시적 기본값으로 사용하고, artifact 업로드 전에 `pnpm verify:export`를 실행한다. project Pages `/pixelfit`은 별도 회귀 build로 유지한다. 배포는 실제 workflow와 공개 URL을 확인해야 완료이며 로컬 빌드 성공만으로 배포 완료라 기록하지 않는다.
+`.github/workflows/deploy-pages.yml`은 `main` push 또는 수동 실행에서 custom-domain root 모드만 사용한다. repository variable이 비어 있으면 `pixelfit.me`를 명시적 기본값으로 사용하고, artifact 업로드 전에 `pnpm verify:export`를 실행한다. 기존 repository variable이 `pixelfit.o-r.kr`이면 코드 기본값보다 우선하므로 실제 전환 배포 전에 `NEXT_PUBLIC_CUSTOM_DOMAIN=pixelfit.me`로 갱신해야 한다. project Pages `/pixelfit`은 별도 회귀 build로 유지한다.
 
-2026-07-24 확인 시 `pixelfit.o-r.kr`의 DNS는 GitHub Pages를 가리키지만 HTTPS 인증서는 해당 호스트명에 아직 유효하지 않았다. 인증서 발급과 Pages의 HTTPS 적용이 끝나기 전에는 Search Console/AdSense의 공개 연결을 완료로 표시하지 않는다. GitHub Pages는 프로젝트가 의도한 임의의 CSP·Permissions-Policy 응답 헤더를 저장소 파일만으로 보장하지 않으므로 MIME, 404, clean URL, 직접 새로고침과 실제 응답 헤더도 공개 호스트에서 따로 검증한다.
+2026-07-25 기준 기존 `pixelfit.o-r.kr` 공개 배포·HTTPS·Search Console 기록은 보존한다. `pixelfit.me`는 등록, Pages custom-domain 설정, apex DNS, 인증서, HTTPS 강제, 새 Search Console 속성·sitemap, AdSense 사이트 추가를 각각 확인하기 전에는 공개 전환으로 표시하지 않는다. GitHub Pages는 한 저장소에 custom domain 하나만 연결하므로 이전 주소를 계속 제공하거나 리디렉션하려면 별도 redirect host/repository 또는 registrar forwarding 전략이 필요하다. 로컬 빌드 성공만으로 어느 외부 단계도 완료 처리하지 않는다.
 
 ## 문서
 

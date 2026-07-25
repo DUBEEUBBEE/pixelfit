@@ -162,15 +162,18 @@
 
 ### 외부 운영 작업
 
-- [x] production custom host를 `pixelfit.o-r.kr`로 선택했고 DNS가 GitHub Pages를 가리키는 것을 확인했다.
-- [ ] `pixelfit.o-r.kr`에 유효한 HTTPS 인증서가 발급되고 HTTP→HTTPS가 정상 적용됐다. (2026-07-24 확인 시 GitHub Pages `*.github.io` 인증서만 보여 호스트명 검증 실패)
-- [ ] Google Search Console URL-prefix 속성에 실제 token을 설정하고 소유권을 확인했다.
-- [ ] Search Console에 실제 sitemap을 제출하고 처리 상태를 기록했다.
+- [x] 이전 production host `pixelfit.o-r.kr`의 DNS·HTTPS·Search Console·sitemap 결과를 기록했다.
+- [x] `pixelfit.me` 등록과 운영자 소유권을 registrar 계정에서 확인했다.
+- [x] repository variable과 Pages custom-domain 설정을 `pixelfit.me`로 일치시켰다.
+- [x] `pixelfit.me` apex DNS와 `www` 레코드를 적용하고, 공개 전파 전에 해당 hostname을 `DUBEEUBBEE/pixelfit` Pages에 선점했다.
+- [ ] `pixelfit.me`에 유효한 HTTPS 인증서가 발급되고 HTTP→HTTPS가 정상 적용됐다.
+- [ ] 새 Google Search Console 속성에 실제 token 또는 DNS 확인을 적용하고 소유권을 확인했다.
+- [ ] `https://pixelfit.me/sitemap.xml`을 제출하고 처리 상태를 기록했다.
 - [ ] Naver Search Advisor를 사용한다면 token을 발급하고 해당 build를 검증했다.
-- [ ] AdSense에 사용할, 운영자가 제어하는 등록 가능 루트 도메인을 확보했다. (`pixelfit.o-r.kr`은 PSL 플랫폼 하위 도메인이 아닌 일반 하위 도메인이고 상위 `o-r.kr/ads.txt` 제어권이 없어 현재 차단)
-- [ ] 등록 가능 루트 도메인에서 AdSense/CMP/`ads.txt` 운영 준비를 실제 계정과 공개 응답으로 완료했다.
+- [ ] `pixelfit.me`를 AdSense 사이트에 추가하고 CMP/`ads.txt` 운영 준비를 실제 계정과 공개 응답으로 완료했다.
+- [ ] 이전 `pixelfit.o-r.kr`을 계속 제공할 경우 별도 redirect endpoint에서 새 canonical로 이동하는 동작을 확인했다.
 
-GitHub Actions Pages가 저장소 `CNAME`만으로 Pages Settings나 인증서 발급을 완료한다고 가정하지 않는다. DNS/TLS, Search Console, Naver, AdSense와 CMP는 로컬 코드 검사로 완료 처리할 수 없다. Search Console은 공개 HTTPS가 유효해진 뒤, AdSense는 등록 가능 루트 도메인을 확보한 뒤 진행한다.
+GitHub Actions Pages가 저장소 `CNAME`만으로 Pages Settings나 인증서 발급을 완료한다고 가정하지 않는다. DNS/TLS, Search Console, Naver, AdSense와 CMP는 로컬 코드 검사로 완료 처리할 수 없다. Search Console과 AdSense는 `pixelfit.me`의 공개 HTTPS가 유효해진 뒤 진행한다.
 
 ## C. v2 로컬 RC 기록 — 공개 승인 기록 아님
 

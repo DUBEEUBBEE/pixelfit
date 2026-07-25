@@ -227,7 +227,7 @@ AdSense 광고 제공은 기본 OFF다. `ADSENSE_ENABLED=true`, 유효한 publis
 
 계정 확인은 광고 제공과 분리한다. 유효한 실제 publisher client가 있으면 광고가 OFF여도 `google-adsense-account` meta와 custom-root `ads.txt`를 만들 수 있지만, 이는 계정·사이트 승인 또는 광고 요청을 뜻하지 않는다.
 
-현재 `pixelfit.o-r.kr`은 Public Suffix List에 등록된 플랫폼 하위 도메인이 아니라 `o-r.kr`의 일반 하위 도메인이며, 이 프로젝트는 상위 `o-r.kr/ads.txt`를 게시할 수 없다. 따라서 AdSense 사이트 등록에는 운영자가 제어하는 등록 가능 루트 도메인이 별도로 필요하다. CMP, AdSense 승인, 개인정보 동의와 철회는 코드만으로 완료되지 않는 외부 운영 항목이며, 이 준비가 끝나지 않으면 광고를 OFF로 유지한다.
+기존 `pixelfit.o-r.kr`은 Public Suffix List에 등록된 플랫폼 하위 도메인이 아니라 `o-r.kr`의 일반 하위 도메인이며, 이 프로젝트는 상위 `o-r.kr/ads.txt`를 게시할 수 없어 AdSense 사이트 등록이 차단됐다. 새 후보 `pixelfit.me`의 DNS·공개 root `ads.txt`·AdSense 사이트 수락, CMP, 개인정보 동의와 철회는 코드만으로 완료되지 않는 외부 운영 항목이며, 이 준비가 끝나지 않으면 광고를 OFF로 유지한다.
 
 ## 12. SEO 제품 계약
 
@@ -250,9 +250,9 @@ Google token을 넣은 정적 HTML은 소유권 확인의 기술 전제일 뿐�
 static export인 `out/`을 사용한다. 두 환경을 각각 빌드·preview한다.
 
 - GitHub project Pages: 실제 canonical + `/pixelfit`
-- custom domain: `pixelfit.o-r.kr` HTTPS root canonical + 빈 base path
+- custom domain candidate: `pixelfit.me` HTTPS root canonical + 빈 base path
 
-GitHub Actions는 custom-root를 production 계약으로 사용하며 환경변수가 없으면 `pixelfit.o-r.kr`을 명시적 기본값으로 선택한다. project Pages `/pixelfit`은 회귀 build다. 공개 URL, 404·직접 새로고침·MIME·보안 header·DNS·TLS를 실제 환경에서 확인해야 배포 완료다. Actions가 `CNAME`만으로 Pages Settings와 인증서를 완료한다고 가정하지 않는다. 2026-07-24 확인 시 DNS는 GitHub Pages를 가리켰지만 해당 호스트명의 HTTPS 인증서는 아직 유효하지 않았다.
+GitHub Actions는 custom-root를 production 계약으로 사용하며 환경변수가 없으면 `pixelfit.me`를 명시적 기본값으로 선택한다. repository variable이 있으면 기본값보다 우선하므로 실제 전환 전에 새 호스트와 일치시킨다. project Pages `/pixelfit`은 회귀 build다. 공개 URL, 404·직접 새로고침·MIME·보안 header·DNS·TLS를 실제 환경에서 확인해야 배포 완료다. Actions가 `CNAME`만으로 Pages Settings와 인증서를 완료한다고 가정하지 않는다.
 
 ## 14. 범위 밖
 

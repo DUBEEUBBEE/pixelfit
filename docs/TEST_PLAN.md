@@ -40,7 +40,7 @@ pnpm test:a11y
 pnpm check
 ```
 
-`pnpm check`는 lint, typecheck, unit/component test, project Pages build와 실제 `pixelfit.o-r.kr` custom-root build를 포함한다. E2E, 접근성, Lighthouse, 실제 GitHub Actions와 공개 URL 검증은 별도다.
+`pnpm check`는 lint, typecheck, unit/component test, project Pages build와 `pixelfit.me` production 후보 custom-root build를 포함한다. E2E, 접근성, Lighthouse, 실제 GitHub Actions와 공개 URL 검증은 별도다.
 
 ## 3. fixture 정책
 
@@ -250,7 +250,7 @@ pnpm build:pages
 pnpm build:custom:test
 ```
 
-`build:custom:test`의 host는 로컬 계약 검사용 `.test` 값이며 실제 소유 도메인이나 DNS 적용을 뜻하지 않는다. `pnpm build`는 현재 실제 production host `pixelfit.o-r.kr`의 custom-root 계약과 verifier를 실행한다. GitHub Actions에서는 같은 값을 `pnpm build:deploy`에 전달한 뒤 `pnpm verify:export`를 실행한다.
+`build:custom:test`의 host는 로컬 계약 검사용 `.test` 값이며 실제 소유 도메인이나 DNS 적용을 뜻하지 않는다. `pnpm build`는 production 후보 `pixelfit.me`의 custom-root 계약과 verifier를 실행한다. GitHub Actions에서는 repository variable 또는 workflow 기본값을 `pnpm build:deploy`에 전달한 뒤 `pnpm verify:export`를 실행한다.
 
 검사:
 
@@ -258,7 +258,7 @@ pnpm build:custom:test
 - 내부 link와 `_next` asset이 root-relative
 - Pages `CNAME` 자동 적용을 성공으로 가정하지 않음
 - 실제 소유 도메인의 DNS, Pages Settings, TLS는 외부 검증 전 `NOT_TESTED`
-- 2026-07-24 확인 시 DNS는 GitHub Pages를 가리켰지만 `pixelfit.o-r.kr`의 HTTPS 인증서가 유효하지 않았으므로 TLS와 검색 소유권 확인은 미완료
+- 기존 `pixelfit.o-r.kr`의 공개 검증 결과를 새 `pixelfit.me`의 DNS·TLS·검색 소유권 증거로 재사용하지 않음
 
 두 build가 모두 성공하고 각 `out/`을 별도로 preview해도 공개 배포 완료를 뜻하지 않는다.
 
@@ -303,4 +303,4 @@ production static preview 또는 실제 후보 URL에서 다음 대표 route를 
 - GitHub Pages artifact 배포와 실제 공개 URL smoke `PASS`
 - 공개 HTTPS, asset MIME, 직접 URL·새로고침과 404 동작 확인
 
-외부 계정 단계인 DNS/TLS, Search Console, Naver, AdSense 승인, CMP와 `ads.txt`는 완료된 것만 별도로 표시한다. 현재 `pixelfit.o-r.kr`은 Public Suffix List에 등록된 플랫폼 하위 도메인이 아닌 일반 하위 도메인이고 상위 `o-r.kr/ads.txt`를 제어할 수 없으므로, AdSense 테스트는 운영자가 제어하는 등록 가능 루트 도메인을 확보하기 전 차단 상태다. 어느 하나라도 증거가 없으면 공개 v1 기록을 재사용하지 않고 v2 항목을 `NOT_TESTED` 또는 미완료로 둔다.
+외부 계정 단계인 DNS/TLS, Search Console, Naver, AdSense 승인, CMP와 `ads.txt`는 완료된 것만 별도로 표시한다. 기존 `pixelfit.o-r.kr`은 상위 `o-r.kr/ads.txt`를 제어할 수 없어 AdSense 등록이 차단됐고, 새 후보 `pixelfit.me`는 각각의 공개·계정 검증을 새로 통과해야 한다. 어느 하나라도 증거가 없으면 이전 호스트 기록을 재사용하지 않고 해당 항목을 `NOT_TESTED` 또는 미완료로 둔다.

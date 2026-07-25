@@ -163,7 +163,7 @@ AdSense 광고 제공은 기본 비활성이다. 다음 조건이 모두 참일 
 
 계정 확인 표면과 광고 제공은 별도다. 실제 형식의 publisher client가 있으면 광고 enabled/slot과 무관하게 `google-adsense-account` meta를 만들고, custom domain build에서는 루트 `ads.txt`를 만든다. 이 두 표면은 계정 연결을 도울 뿐 광고 요청, 사이트 승인 또는 동의 준수를 뜻하지 않는다. CMP, 계정·사이트 승인과 지역별 동의 정책은 외부 운영 작업이다.
 
-현재 `pixelfit.o-r.kr`은 Public Suffix List에 등록된 플랫폼 하위 도메인이 아니라 `o-r.kr` 아래 일반 하위 도메인이며 상위 `o-r.kr/ads.txt`도 이 프로젝트가 제어하지 못한다. 따라서 이 호스트는 현재 AdSense 사이트 등록 계약을 충족하지 못하고, 운영자가 제어하는 등록 가능 루트 도메인이 필요하다. 이 제약이 해소되고 CMP·승인이 확인되기 전에는 광고 제공을 OFF로 유지한다.
+기존 `pixelfit.o-r.kr`은 Public Suffix List에 등록된 플랫폼 하위 도메인이 아니라 `o-r.kr` 아래 일반 하위 도메인이며 상위 `o-r.kr/ads.txt`도 이 프로젝트가 제어하지 못해 AdSense 사이트 등록 계약을 충족하지 못했다. 새 production 후보 `pixelfit.me`는 registrable root 형식이지만, 공개 root `ads.txt`, AdSense 사이트 수락, CMP와 승인이 실제 확인되기 전에는 광고 제공을 OFF로 유지한다.
 
 ## 12. SEO와 구조화 데이터
 
@@ -185,7 +185,7 @@ HEIC 디코더는 번들하지 않는다. HEIC 또는 미지원 container에 대
 
 ## 14. 빌드와 배포 경계
 
-`next.config.ts`의 `output: "export"`로 `out/`을 만든다. `next start`나 이미지 처리 서버를 사용하지 않는다. `pnpm build`는 실제 `pixelfit.o-r.kr` root 계약, `pnpm build:pages`는 `/pixelfit` 회귀 계약, `pnpm build:custom:test`는 test-only root-domain 계약을 빌드한다. `scripts/verify-static-export.mjs`는 route·canonical·asset·OG·CNAME·검증 meta·광고 비활성 상태를 검사한다.
+`next.config.ts`의 `output: "export"`로 `out/`을 만든다. `next start`나 이미지 처리 서버를 사용하지 않는다. `pnpm build`는 `pixelfit.me` production 후보 root 계약, `pnpm build:pages`는 `/pixelfit` 회귀 계약, `pnpm build:custom:test`는 test-only root-domain 계약을 빌드한다. `scripts/verify-static-export.mjs`는 route·canonical·asset·OG·CNAME·검증 meta·광고 비활성 상태를 검사한다.
 
 Next.js 16 기본 Turbopack은 현재 Worker 모듈 그래프에서 빌드가 끝나지 않아 release script는 `next build --webpack`을 사용한다. Webpack은 Worker runtime chunk 사이의 circular-dependency 경고를 출력하지만 정적 export와 브라우저 검사는 통과했다. 이는 제거되지 않은 알려진 build 경고이며 [STATUS.md](./STATUS.md)에 기록한다.
 
@@ -198,4 +198,4 @@ Next.js 16 기본 Turbopack은 현재 Worker 모듈 그래프에서 빌드가 �
 
 공개 release에는 여기에 실제 GitHub Actions, 공개 URL, 404·새로고침·MIME·응답 헤더 검증을 추가한다.
 
-실행하지 않은 항목은 `NOT_TESTED`다. 로컬 정적 export가 성공해도 DNS, TLS, Search Console, Naver, AdSense, CMP 또는 공개 배포 완료로 확대하지 않는다. 2026-07-24 외부 확인에서는 DNS가 GitHub Pages를 가리켰지만 `pixelfit.o-r.kr` HTTPS 인증서가 아직 유효하지 않았으므로 공개 소유권 확인은 보류 상태다.
+실행하지 않은 항목은 `NOT_TESTED`다. 로컬 정적 export가 성공해도 DNS, TLS, Search Console, Naver, AdSense, CMP 또는 공개 배포 완료로 확대하지 않는다. 기존 `pixelfit.o-r.kr`의 2026-07-25 공개 HTTPS·Search Console 성공은 새 `pixelfit.me`의 상태를 증명하지 않는다.

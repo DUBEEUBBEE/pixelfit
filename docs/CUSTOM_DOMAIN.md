@@ -1,6 +1,6 @@
 # Custom domain readiness
 
-Last verified: 2026-07-23
+Last verified: 2026-07-25
 
 PixelFit supports two mutually exclusive static export modes. A repository-project deployment uses `/pixelfit`; a custom domain deployment uses the domain root. Setting `NEXT_PUBLIC_CUSTOM_DOMAIN` or the compatibility alias `CUSTOM_DOMAIN` always clears the base path and makes `https://<domain>` the canonical origin.
 
@@ -42,24 +42,28 @@ The project Pages URL `https://dubeeubbee.github.io/pixelfit/` is a subpath unde
 
 ## GitHub Actions behavior
 
-The deployment workflow reads the optional repository variable `NEXT_PUBLIC_CUSTOM_DOMAIN` and falls back to `CUSTOM_DOMAIN` for compatibility.
+The deployment workflow reads the optional repository variable `NEXT_PUBLIC_CUSTOM_DOMAIN`, falls back to `CUSTOM_DOMAIN` for compatibility, and finally uses the production candidate `pixelfit.me`.
 
-- When absent, it builds `https://dubeeubbee.github.io/pixelfit` with `/pixelfit`.
-- When present, it builds `https://<CUSTOM_DOMAIN>` at `/` and adds `out/CNAME` to the uploaded artifact.
-- It never creates a `CNAME` file when the domain variable is empty.
+- With no repository variables, it builds `https://pixelfit.me` at `/` and adds `out/CNAME`.
+- When a domain variable is present, that value takes precedence over the workflow default.
+- `pnpm build:pages` remains the explicit `https://dubeeubbee.github.io/pixelfit/` regression build and does not create `out/CNAME`.
+
+Before the migration deployment, set `NEXT_PUBLIC_CUSTOM_DOMAIN=pixelfit.me` in repository variables and remove or align a conflicting legacy `CUSTOM_DOMAIN`. A still-configured `pixelfit.o-r.kr` variable overrides the new source fallback.
 
 Important: GitHub's documentation says a custom GitHub Actions Pages workflow ignores a `CNAME` file and does not require one. The conditional artifact is therefore a declaration/readiness file, not a substitute for the Pages setting. A working custom domain still requires an administrator to save the domain under repository **Settings → Pages → Custom domain** and configure DNS.
 
-## Operator-owned external steps
+## `pixelfit.me` migration sequence
 
 These steps have not been performed by this code change:
 
-1. Verify ownership of the domain in GitHub when possible.
-2. Add the custom domain to the repository's Pages settings before pointing DNS at GitHub.
-3. For an apex domain, configure the GitHub Pages `A`/`AAAA` addresses or a supported `ALIAS`/`ANAME`.
-4. For a subdomain, point its `CNAME` directly to `dubeeubbee.github.io`, without `/pixelfit`.
-5. Avoid wildcard DNS records, wait for DNS propagation, and then enable HTTPS in Pages.
-6. Verify the live canonical URLs, redirects, `robots.txt`, `sitemap.xml`, assets, and 404 response after propagation.
+1. Confirm `pixelfit.me` registration and account ownership.
+2. Verify the domain in GitHub when possible and set repository variables to `NEXT_PUBLIC_CUSTOM_DOMAIN=pixelfit.me`.
+3. Save `pixelfit.me` in repository **Settings → Pages → Custom domain** before pointing DNS at GitHub.
+4. Configure the apex `A`/`AAAA` records to GitHub Pages, and optionally set `www` as a CNAME directly to `dubeeubbee.github.io`.
+5. Avoid wildcard DNS records, wait for propagation, confirm Pages' DNS check, and enable HTTPS.
+6. Deploy the candidate and verify strict HTTPS, canonical URLs, redirects, `robots.txt`, `sitemap.xml`, assets, direct route refresh, MIME, and 404 behavior.
+7. Add and verify the new Search Console property, submit `https://pixelfit.me/sitemap.xml`, and only then proceed with AdSense site review while ad serving remains OFF.
+8. If `pixelfit.o-r.kr` must keep working, move that hostname to a separate redirect service/repository. One GitHub Pages site cannot retain it as a second custom domain, and canonical markup alone does not redirect users or crawlers.
 
 DNS changes and the HTTPS option can each take up to 24 hours. Code readiness must not be reported as DNS application, domain verification, HTTPS completion, or a successful public migration.
 

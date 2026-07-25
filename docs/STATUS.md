@@ -4,6 +4,31 @@
 
 이 문서는 공개 v1, 로컬 v2 RC, 공개 v2를 분리하고 실행한 검사만 `PASS`로 기록한다. 실기기 Safari처럼 실행하지 않은 항목은 `NOT_TESTED`로 남긴다.
 
+## `pixelfit.me` canonical 전환 후보 — 2026-07-25 16:25~16:32 KST
+
+이 절은 새 registrable-root 후보를 위한 소스·정적 export 계약과 실제 registrar·GitHub 설정을 구분해 기록한다. Git push·GitHub Actions·TLS·공개 URL·새 Search Console·AdSense는 아직 완료되지 않았다.
+
+- 기본 `pnpm build`와 Pages workflow의 빈 변수 fallback을 `pixelfit.me` HTTPS root canonical·빈 base path로 변경했다.
+- Namecheap 계정에서 `pixelfit.me` 등록·소유권과 2027-07-25 만료를 확인했다. 도메인 자동 갱신은 OFF, 개인정보 보호는 ON이다.
+- NC.me가 만든 GitHub Pages apex A 레코드 4개와 `www` CNAME을 Namecheap BasicDNS에서 확인했다. 공개 DNS 위임은 확인 시점에 아직 전파 중이었다.
+- NC.me OAuth가 처음에는 `DUBEEUBBEE.github.io` 루트 Pages에 새 도메인을 잘못 연결했다. 해당 연결을 제거하고 `DUBEEUBBEE/pixelfit` Pages에 `pixelfit.me`를 저장했다.
+- repository variable `NEXT_PUBLIC_CUSTOM_DOMAIN=pixelfit.me`를 생성했고 기존 Google verification 변수는 보존했다. 충돌하는 `CUSTOM_DOMAIN` 변수는 없었다.
+- 기존 `pixelfit.o-r.kr` 공개·HTTPS·Search Console 기록은 아래에 보존한다. 한 Pages site의 단일 custom-domain 제한 때문에 이전 주소를 계속 제공하려면 별도 redirect endpoint가 필요하다.
+
+| 확인 | 현재 결과 |
+| --- | --- |
+| `pnpm check` | `PASS` — lint warning 0, typecheck 성공, Vitest 40 files·132/132, Pages verifier 409 checks, `pixelfit.me` custom verifier 410 checks |
+| 정적 route·SEO asset | `PASS` — 두 build 모두 31 static pages, sitemap 27 URLs, OG 23 files |
+| custom export host | `PASS` — `out/CNAME=pixelfit.me`, 홈 canonical `https://pixelfit.me/`, robots sitemap `https://pixelfit.me/sitemap.xml` |
+| custom export 누출 검사 | `PASS` — `pixelfit.o-r.kr` 0 files, `/pixelfit` custom-root URL/asset pattern 0 files |
+| 광고 OFF | `PASS` — custom export의 `pagead2.googlesyndication.com`/`adsbygoogle` 0 files |
+| 대표 Playwright smoke | `PASS` — Chromium/mobile에서 도구 탐색·8개 가이드·정보/404 정적 경로 6/6 |
+| 도메인 등록·registrar 설정 | `PASS` — Namecheap ACTIVE, apex A 4개와 `www` CNAME 확인, auto-renew OFF, privacy ON |
+| GitHub repository variable·Pages domain | `PASS` — 변수와 Pages 모두 `pixelfit.me`, 잘못 연결된 루트 Pages에서는 제거 |
+| GitHub push·Actions·새 artifact 배포 | `NOT_TESTED` — 아래 로컬 후보 commit 이후 실행 필요 |
+| 공개 DNS·TLS·공개 응답 | `IN_PROGRESS` — `.me` 위임과 인증서가 아직 전파·발급 중 |
+| 새 Search Console·sitemap·AdSense·CMP | `NOT_TESTED` — 공개 HTTPS와 실제 계정 확인 필요 |
+
 ## 공개 v2 custom-domain SEO·AdSense 상태 — 2026-07-25
 
 이 절은 아래 2026-07-23 로컬 RC·구현 기록보다 최신이며, `f7657dc`까지의 GitHub-hosted 배포와 공개 확인 결과를 기록한다.
@@ -185,7 +210,7 @@ M10 최종 QA와 출시 준비 — 2026-07-22 GitHub Pages 공개 배포 완료
 - Worker·OffscreenCanvas·createImageBitmap 중 하나라도 없으면 로컬 Canvas 폴백을 사용한다. 폴백의 긴 필름 픽셀 루프는 시작·종료 사이 즉시 취소할 수 없다.
 - 네컷 Worker는 합산 6천만 픽셀을 상한으로 순차 decode하지만, 렌더 중 원본 bitmap이 일시적으로 그 상한까지 존재할 수 있어 저메모리 실기기 검증이 남아 있다.
 - production webpack build는 성공하지만 Worker runtime 청크 간 순환 의존 경고가 출력된다. 44개 Chromium/WebKit 브라우저 검사는 통과했고 기능 오류는 관찰되지 않았다.
-- 광고 ON staging, 실제 AdSense/CMP와 Naver 외부 등록은 로컬 코드로 검증하지 않았다. `pixelfit.o-r.kr` DNS는 확인했지만 TLS 인증서는 2026-07-24 현재 발급 대기 상태이며, 이 일반 하위 도메인은 AdSense 등록 가능 루트 도메인을 대신하지 못한다.
+- 광고 ON staging, 실제 AdSense/CMP와 Naver 외부 등록은 로컬 코드로 검증하지 않았다. 기존 `pixelfit.o-r.kr`의 TLS는 이후 정상 발급됐지만 이 일반 하위 도메인은 AdSense 등록 가능 루트 도메인을 대신하지 못했다. 새 `pixelfit.me`의 외부 운영 상태는 위 전환 절의 `NOT_TESTED` 항목을 따른다.
 
 ## 공개 v1 마지막 검증 기록
 
@@ -204,4 +229,4 @@ M10 최종 QA와 출시 준비 — 2026-07-22 GitHub Pages 공개 배포 완료
 - GitHub Pages `29924220581`: build + deploy 성공, `https://dubeeubbee.github.io/pixelfit/`
 - 공개 smoke: 13개 경로 HTTP 200, 홈→여권사진 생성→24,929-byte 413×531 JPG 다운로드, console errors 0 / warnings 0
 
-다음 갱신은 v2 최종 QA·commit과 GitHub-hosted CI/Pages run, `pixelfit.o-r.kr` 인증서 발급 후 공개 v2 smoke·Search Console 결과, 실기기 Safari·저메모리 대형 이미지 회복력, 등록 가능 루트 도메인 확보 후 AdSense/CMP 운영 검증을 기록한다.
+다음 갱신은 `pixelfit.me` 전환 commit과 GitHub-hosted CI/Pages run, 새 도메인의 DNS·TLS·공개 smoke·Search Console 결과, 이전 주소 redirect, 실기기 Safari·저메모리 대형 이미지 회복력과 AdSense/CMP 운영 검증을 기록한다.
