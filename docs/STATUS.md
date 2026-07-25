@@ -1,22 +1,22 @@
 # 픽셀핏 상태
 
-스냅샷: 2026-07-25 KST
+스냅샷: 2026-07-26 KST
 
 이 문서는 공개 v1, 로컬 v2 RC, 공개 v2를 분리하고 실행한 검사만 `PASS`로 기록한다. 실기기 Safari처럼 실행하지 않은 항목은 `NOT_TESTED`로 남긴다.
 
-## `pixelfit.me` canonical 전환·공개 등록 — 2026-07-25 16:25~16:55 KST
+## `pixelfit.me` canonical 전환·공개 등록 — 2026-07-25 16:25~16:55 KST, `www` 보정 2026-07-26
 
 이 절은 새 registrable root의 소스·정적 export 계약, 실제 registrar·GitHub 배포, 공개 응답과 외부 계정 상태를 구분해 기록한다. 검토 대기나 아직 강제되지 않은 HTTPS를 완료로 확대하지 않는다.
 
 - 기본 `pnpm build`와 Pages workflow의 빈 변수 fallback을 `pixelfit.me` HTTPS root canonical·빈 base path로 변경했다.
 - Namecheap 계정에서 `pixelfit.me` 등록·소유권과 2027-07-25 만료를 확인했다. 도메인 자동 갱신은 OFF, 개인정보 보호는 ON이다.
-- NC.me가 만든 GitHub Pages apex A 레코드 4개와 `www` CNAME을 Namecheap BasicDNS에서 확인했다. 공개 DNS 위임은 확인 시점에 아직 전파 중이었다.
+- NC.me가 만든 GitHub Pages apex A 레코드 4개를 유지했다. 2026-07-26 Namecheap BasicDNS에서 잘못된 `www → pixelfit.me` CNAME만 `www → dubeeubbee.github.io`로 수정했고, 권한 NS·Google·Cloudflare·Quad9·로컬 resolver의 전파를 확인했다.
 - NC.me OAuth가 처음에는 `DUBEEUBBEE.github.io` 루트 Pages에 새 도메인을 잘못 연결했다. 해당 연결을 제거하고 `DUBEEUBBEE/pixelfit` Pages에 `pixelfit.me`를 저장했다.
 - repository variable `NEXT_PUBLIC_CUSTOM_DOMAIN=pixelfit.me`를 생성했고 새 URL-prefix 속성이 발급한 Google verification 값으로 인증 변수를 갱신했다. 충돌하는 `CUSTOM_DOMAIN` 변수는 없었다.
 - 실제 AdSense 계정의 `NEXT_PUBLIC_ADSENSE_CLIENT`도 repository variable로 추가했다. 이는 account meta와 root `ads.txt`만 만들며, enabled·slot 변수는 두지 않아 광고 loader와 slot은 계속 OFF다.
 - `ca6080c`의 hosted CI `30149561340`과 Pages `30149561395`, Google 인증값 반영을 위한 수동 Pages `30149938432`이 모두 성공했다.
 - 공개 apex는 GitHub Pages A 레코드 4개로 해석되고 유효한 `pixelfit.me` 인증서로 HTTPS `200`을 반환한다. Pages 인증서 승인 후 `https_enforced=true`로 전환했고 HTTP는 HTTPS로 `301` redirect한다.
-- `www`는 NC.me가 `pixelfit.me`로 만든 CNAME 때문에 strict TLS가 실패한다. GitHub 문서에 맞춰 `DUBEEUBBEE.github.io`로 바꿔야 하지만 이 기록 시점의 Namecheap 세션은 로그인되어 있지 않아 수정하지 않았다.
+- `www` CNAME 보정과 공개 DNS 전파를 완료했다. GitHub Pages 4개 IPv4 엣지 모두 `pixelfit.me`과 `www.pixelfit.me`을 포함한 인증서를 제공하며, `www`의 HTTP·strict HTTPS 요청은 모두 `https://pixelfit.me/`로 `301` redirect한다.
 - Search Console URL-prefix `https://pixelfit.me/` 소유권을 HTML meta로 확인했다. `/sitemap.xml`은 상태 `성공`, 발견된 페이지 27개다.
 - AdSense에서 `pixelfit.me`를 추가하고 공개 root `ads.txt`로 사이트를 확인한 뒤 검토를 요청했다. 계정 상태는 `준비 중`이며 승인이나 광고 게재 완료가 아니다.
 - 기존 `pixelfit.o-r.kr` 공개·HTTPS·Search Console 기록은 아래에 보존한다. 한 Pages site의 단일 custom-domain 제한 때문에 이전 주소를 계속 제공하려면 별도 redirect endpoint가 필요하다.
@@ -29,14 +29,14 @@
 | custom export 누출 검사 | `PASS` — `pixelfit.o-r.kr` 0 files, `/pixelfit` custom-root URL/asset pattern 0 files |
 | 광고 OFF | `PASS` — custom export의 `pagead2.googlesyndication.com`/`adsbygoogle` 0 files |
 | 대표 Playwright smoke | `PASS` — Chromium/mobile에서 도구 탐색·8개 가이드·정보/404 정적 경로 6/6 |
-| 도메인 등록·registrar 설정 | `PASS` — Namecheap ACTIVE, apex A 4개와 `www` CNAME 확인, auto-renew OFF, privacy ON |
+| 도메인 등록·registrar 설정 | `PASS` — Namecheap ACTIVE, apex A 4개 유지, `www → dubeeubbee.github.io` CNAME 저장·전파, auto-renew OFF, privacy ON |
 | GitHub repository variable·Pages domain | `PASS` — 변수와 Pages 모두 `pixelfit.me`, 잘못 연결된 루트 Pages에서는 제거 |
 | AdSense 계정 확인 입력 | `PASS` — 실제 publisher client 설정, enabled·slot 미설정으로 광고 제공 OFF 유지 |
 | GitHub push·Actions·새 artifact 배포 | `PASS` — `ca6080c`, CI `30149561340`, Pages `30149561395`, 인증 meta 재배포 `30149938432` 성공 |
 | 공개 SEO·AdSense 파일 | `PASS` — 홈·`robots.txt`·`sitemap.xml`·`ads.txt` HTTPS `200`, canonical·두 계정 meta 일치, sitemap 27 URLs, 광고 loader 0 |
 | 공개 apex DNS·TLS | `PASS` — GitHub Pages A 4개, SAN `pixelfit.me`의 유효한 Let's Encrypt 인증서, strict HTTPS `200` |
 | HTTP→HTTPS 강제 | `PASS` — Pages 인증서 승인·`https_enforced=true`, HTTP→HTTPS `301` 확인 |
-| `www` DNS·TLS | `BLOCKED` — CNAME을 `DUBEEUBBEE.github.io`로 수정해야 하나 Namecheap 로그인 세션이 없어 현재 strict TLS 실패 |
+| `www` DNS·TLS | `PASS` — `www → dubeeubbee.github.io` 전파, 두 호스트 SAN 인증서, HTTP·strict HTTPS `www`→HTTPS apex `301` 확인 |
 | 새 Search Console·sitemap | `PASS` — URL-prefix HTML 인증 완료, `/sitemap.xml` 처리 `성공`, 27페이지 발견 |
 | AdSense 사이트 확인·검토 | `IN_PROGRESS` — `ads.txt` 소유권 확인과 리뷰 요청 완료, 계정 상태 `준비 중`; 광고 제공은 OFF |
 | AdSense 승인·CMP·광고 제공 | `NOT_TESTED` — 계정 승인 전이며 CMP 미구성, enabled·slot 미설정 |

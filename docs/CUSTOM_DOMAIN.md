@@ -1,6 +1,6 @@
 # Custom domain readiness
 
-Last verified: 2026-07-25
+Last verified: 2026-07-26
 
 PixelFit supports two mutually exclusive static export modes. A repository-project deployment uses `/pixelfit`; a custom domain deployment uses the domain root. Setting `NEXT_PUBLIC_CUSTOM_DOMAIN` or the compatibility alias `CUSTOM_DOMAIN` always clears the base path and makes `https://<domain>` the canonical origin.
 
@@ -54,13 +54,13 @@ Important: GitHub's documentation says a custom GitHub Actions Pages workflow ig
 
 ## `pixelfit.me` migration state
 
-Live checks on 2026-07-25 established the following state:
+Live checks on 2026-07-25 through 2026-07-26 established the following state:
 
 1. `pixelfit.me` is registered through 2027-07-25; auto-renew is OFF and privacy is ON.
 2. `NEXT_PUBLIC_CUSTOM_DOMAIN=pixelfit.me` is configured and the Pages custom domain belongs to `DUBEEUBBEE/pixelfit`.
 3. The apex resolves to all four GitHub Pages IPv4 addresses and public HTTPS validates with a `pixelfit.me` certificate.
 4. Pages DNS checking and certificate approval completed, and `Enforce HTTPS` was enabled. Edge HTTP redirects may take additional time to propagate.
-5. `www.pixelfit.me` still points to the apex instead of directly to `DUBEEUBBEE.github.io`. Until that Namecheap CNAME is corrected, strict HTTPS on `www` is not valid.
+5. On 2026-07-26, the Namecheap `www` CNAME was corrected from the apex to `dubeeubbee.github.io`. Authoritative DNS, Google, Cloudflare, Quad9 and the local resolver all returned the new target. All four GitHub Pages edges then served a certificate covering both `pixelfit.me` and `www.pixelfit.me`; strict HTTP and HTTPS requests to `www` redirect to the HTTPS apex.
 6. The public home, `robots.txt`, `sitemap.xml`, `ads.txt`, canonical and account verification meta were checked. The export contains no AdSense loader while ad serving is OFF.
 7. The Search Console URL-prefix property was verified and `/sitemap.xml` processed successfully with 27 discovered pages.
 8. AdSense ownership was verified through root `ads.txt` and review was requested; the live account remains `준비 중`.
