@@ -7,20 +7,20 @@ This document separates build-time SEO readiness from external search-engine ope
 ## Canonical URL modes
 
 - Project Pages: origin and path base `https://dubeeubbee.github.io/pixelfit`, asset base `/pixelfit`.
-- Production custom-domain candidate: origin `https://pixelfit.me`, asset base empty.
+- Production custom domain: origin `https://pixelfit.me`, asset base empty.
 - Generic custom-domain test: origin `https://<CUSTOM_DOMAIN>`, asset base empty.
 
 `src/config/env.ts` validates both modes, and `src/config/brand.ts` is the shared source for canonical URLs and public asset paths. Next static export uses trailing slashes for page routes. Both modes must be built and inspected before a domain migration.
 
-The project Pages canonical URL is a `/pixelfit/` subpath on `github.io`. Its `WebSite` JSON-LD can describe the deployed site, but it cannot establish PixelFit as the root-domain site name for `github.io`. The production candidate build emits root canonical URLs for `pixelfit.me`; search engines still decide whether to display that site name.
+The project Pages canonical URL is a `/pixelfit/` subpath on `github.io`. Its `WebSite` JSON-LD can describe the deployed site, but it cannot establish PixelFit as the root-domain site name for `github.io`. The production build emits root canonical URLs for `pixelfit.me`; search engines still decide whether to display that site name.
 
-The existing `pixelfit.o-r.kr` deployment, HTTPS and Search Console property are evidence for the previous host only. Keep it available until `pixelfit.me` registration, Pages custom-domain setting, DNS, certificate provisioning, strict HTTPS, canonical URLs, sitemap and public assets have been verified. Because one Pages site can have only one custom domain, preserving the previous address after the switch requires a separately operated redirect endpoint; changing the canonical alone is not a redirect.
+The existing `pixelfit.o-r.kr` deployment, HTTPS and Search Console property are historical evidence for the previous host only. The Pages custom domain now belongs to `pixelfit.me`. Because one Pages site can have only one custom domain, preserving the previous address after the switch requires a separately operated redirect endpoint; changing the canonical alone is not a redirect.
 
 ## Search verification tokens
 
 `NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION` is optional and validated as a plain token. The compatibility alias `GOOGLE_SITE_VERIFICATION` is also accepted, but the public value wins if both differ. A valid value renders the `google-site-verification` meta used by a Google Search Console URL-prefix property.
 
-For the new host, either verify a Domain property for `pixelfit.me` through an apex DNS TXT record or add the URL-prefix property `https://pixelfit.me/` and use the validated HTML meta token. The generated meta remains only a technical prerequisite: after strict HTTPS is valid, the operator must add and verify the new property and submit `https://pixelfit.me/sitemap.xml` in the live Search Console account. Preserve the previous `https://pixelfit.o-r.kr/` property as migration history; do not mark the new property complete from the old result.
+The URL-prefix property `https://pixelfit.me/` was verified with the validated HTML meta on 2026-07-25. The live Search Console account processed `https://pixelfit.me/sitemap.xml` successfully and reported 27 discovered pages. This proves ownership and sitemap processing only; it does not claim that every URL is indexed or ranked. Preserve the previous `https://pixelfit.o-r.kr/` property as migration history.
 
 `NEXT_PUBLIC_NAVER_SITE_VERIFICATION` is also optional and the legacy alias `NAVER_SITE_VERIFICATION` remains accepted. A local or deployed verification meta does not prove that either search service accepted ownership.
 

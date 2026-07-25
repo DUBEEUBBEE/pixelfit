@@ -52,18 +52,19 @@ Before the migration deployment, set `NEXT_PUBLIC_CUSTOM_DOMAIN=pixelfit.me` in 
 
 Important: GitHub's documentation says a custom GitHub Actions Pages workflow ignores a `CNAME` file and does not require one. The conditional artifact is therefore a declaration/readiness file, not a substitute for the Pages setting. A working custom domain still requires an administrator to save the domain under repository **Settings → Pages → Custom domain** and configure DNS.
 
-## `pixelfit.me` migration sequence
+## `pixelfit.me` migration state
 
-These steps have not been performed by this code change:
+Live checks on 2026-07-25 established the following state:
 
-1. Confirm `pixelfit.me` registration and account ownership.
-2. Verify the domain in GitHub when possible and set repository variables to `NEXT_PUBLIC_CUSTOM_DOMAIN=pixelfit.me`.
-3. Save `pixelfit.me` in repository **Settings → Pages → Custom domain** before pointing DNS at GitHub.
-4. Configure the apex `A`/`AAAA` records to GitHub Pages, and optionally set `www` as a CNAME directly to `dubeeubbee.github.io`.
-5. Avoid wildcard DNS records, wait for propagation, confirm Pages' DNS check, and enable HTTPS.
-6. Deploy the candidate and verify strict HTTPS, canonical URLs, redirects, `robots.txt`, `sitemap.xml`, assets, direct route refresh, MIME, and 404 behavior.
-7. Add and verify the new Search Console property, submit `https://pixelfit.me/sitemap.xml`, and only then proceed with AdSense site review while ad serving remains OFF.
-8. If `pixelfit.o-r.kr` must keep working, move that hostname to a separate redirect service/repository. One GitHub Pages site cannot retain it as a second custom domain, and canonical markup alone does not redirect users or crawlers.
+1. `pixelfit.me` is registered through 2027-07-25; auto-renew is OFF and privacy is ON.
+2. `NEXT_PUBLIC_CUSTOM_DOMAIN=pixelfit.me` is configured and the Pages custom domain belongs to `DUBEEUBBEE/pixelfit`.
+3. The apex resolves to all four GitHub Pages IPv4 addresses and public HTTPS validates with a `pixelfit.me` certificate.
+4. Pages DNS checking and certificate approval completed, and `Enforce HTTPS` was enabled. Edge HTTP redirects may take additional time to propagate.
+5. `www.pixelfit.me` still points to the apex instead of directly to `DUBEEUBBEE.github.io`. Until that Namecheap CNAME is corrected, strict HTTPS on `www` is not valid.
+6. The public home, `robots.txt`, `sitemap.xml`, `ads.txt`, canonical and account verification meta were checked. The export contains no AdSense loader while ad serving is OFF.
+7. The Search Console URL-prefix property was verified and `/sitemap.xml` processed successfully with 27 discovered pages.
+8. AdSense ownership was verified through root `ads.txt` and review was requested; the live account remains `준비 중`.
+9. If `pixelfit.o-r.kr` must keep working, move that hostname to a separate redirect service/repository. One GitHub Pages site cannot retain it as a second custom domain, and canonical markup alone does not redirect users or crawlers.
 
 DNS changes and the HTTPS option can each take up to 24 hours. Code readiness must not be reported as DNS application, domain verification, HTTPS completion, or a successful public migration.
 

@@ -38,7 +38,7 @@ A valid real `NEXT_PUBLIC_ADSENSE_CLIENT` or compatibility `ADSENSE_CLIENT` is h
 
 This allows the account/site connection surface to be prepared without activating advertising. The export verifier checks the configured meta and `ads.txt` separately from the OFF-mode prohibition on `pagead2.googlesyndication.com`, `adsbygoogle`, and PixelFit ad-slot markup. Use only the publisher ID issued in the live account; never commit a placeholder.
 
-The 2026-07-23 OFF-build result with no client remains a historical pass: it contained no loader, publisher marker, slot, or `ads.txt`. The 2026-07-24 implementation adds the decoupled account-identification path, but live publisher values, AdSense review, consent behavior, and live network requests remain `NOT_TESTED` until the new root domain is publicly ready and accepted in the live account.
+The 2026-07-23 OFF-build result with no client remains a historical pass: it contained no loader, publisher marker, slot, or `ads.txt`. On 2026-07-25 the decoupled account-identification path was deployed to `pixelfit.me` with the publisher issued by the live account. The public meta and root `ads.txt` were verified, AdSense accepted the `ads.txt` ownership check, and site review was requested. The account status is `준비 중`; approval, CMP behavior, active ad serving, and live ad requests remain `NOT_TESTED`.
 
 ## ads.txt
 
@@ -60,13 +60,13 @@ The previous public host `pixelfit.o-r.kr` could not be used as the AdSense site
 - Google validates site URLs at the registrable-domain/public-suffix boundary and its ads.txt crawler expects authorization at the applicable root, while this project cannot publish or reference the required `o-r.kr/ads.txt`;
 - therefore a generated `https://pixelfit.o-r.kr/ads.txt` is not evidence that the root ads.txt requirement is satisfied.
 
-The production build target is now the registrable-root candidate `pixelfit.me`. Its format removes the previous parent-domain boundary, but source changes alone do not prove registration, ownership, DNS, GitHub Pages configuration, HTTPS, root `ads.txt`, Search Console ownership, AdSense acceptance, or review status. Keep ad serving OFF during migration and do not claim the new site was accepted without live dashboard evidence.
+The production build target is now the registrable root `pixelfit.me`. Registration, apex DNS, GitHub Pages, public HTTPS, root `ads.txt`, Search Console URL-prefix ownership, sitemap processing, AdSense ownership verification, and the review request were checked against their live systems on 2026-07-25. AdSense remains `준비 중`, not approved, and ad serving remains OFF.
 
 The previous host's 2026-07-25 HTTPS and Search Console success remains historical evidence for that host only. It cannot be reused as evidence for `pixelfit.me`.
 
 ## Consent and approval are external
 
-Before activating ads, the operator must:
+The first three steps below were performed on 2026-07-25. Before activating ads, the remaining approval, notice, CMP, consent, placement, policy, and network checks must still be completed:
 
 1. Confirm registration and ownership of `pixelfit.me`, then deploy it as the canonical root.
 2. Confirm strict HTTPS, canonical URLs, Search Console ownership, and root `ads.txt` on that domain.
