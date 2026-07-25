@@ -13,6 +13,7 @@
 - NC.me가 만든 GitHub Pages apex A 레코드 4개와 `www` CNAME을 Namecheap BasicDNS에서 확인했다. 공개 DNS 위임은 확인 시점에 아직 전파 중이었다.
 - NC.me OAuth가 처음에는 `DUBEEUBBEE.github.io` 루트 Pages에 새 도메인을 잘못 연결했다. 해당 연결을 제거하고 `DUBEEUBBEE/pixelfit` Pages에 `pixelfit.me`를 저장했다.
 - repository variable `NEXT_PUBLIC_CUSTOM_DOMAIN=pixelfit.me`를 생성했고 기존 Google verification 변수는 보존했다. 충돌하는 `CUSTOM_DOMAIN` 변수는 없었다.
+- 실제 AdSense 계정의 `NEXT_PUBLIC_ADSENSE_CLIENT`도 repository variable로 추가했다. 이는 account meta와 root `ads.txt`만 만들며, enabled·slot 변수는 두지 않아 광고 loader와 slot은 계속 OFF다.
 - 기존 `pixelfit.o-r.kr` 공개·HTTPS·Search Console 기록은 아래에 보존한다. 한 Pages site의 단일 custom-domain 제한 때문에 이전 주소를 계속 제공하려면 별도 redirect endpoint가 필요하다.
 
 | 확인 | 현재 결과 |
@@ -25,7 +26,8 @@
 | 대표 Playwright smoke | `PASS` — Chromium/mobile에서 도구 탐색·8개 가이드·정보/404 정적 경로 6/6 |
 | 도메인 등록·registrar 설정 | `PASS` — Namecheap ACTIVE, apex A 4개와 `www` CNAME 확인, auto-renew OFF, privacy ON |
 | GitHub repository variable·Pages domain | `PASS` — 변수와 Pages 모두 `pixelfit.me`, 잘못 연결된 루트 Pages에서는 제거 |
-| GitHub push·Actions·새 artifact 배포 | `NOT_TESTED` — 아래 로컬 후보 commit 이후 실행 필요 |
+| AdSense 계정 확인 입력 | `PASS` — 실제 publisher client 설정, enabled·slot 미설정으로 광고 제공 OFF 유지 |
+| GitHub push·Actions·새 artifact 배포 | `IN_PROGRESS` — 후보 source는 `main`에 push됐고 hosted CI·Pages 결론을 대기 중 |
 | 공개 DNS·TLS·공개 응답 | `IN_PROGRESS` — `.me` 위임과 인증서가 아직 전파·발급 중 |
 | 새 Search Console·sitemap·AdSense·CMP | `NOT_TESTED` — 공개 HTTPS와 실제 계정 확인 필요 |
 
