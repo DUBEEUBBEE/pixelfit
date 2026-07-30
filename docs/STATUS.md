@@ -4,7 +4,7 @@
 
 이 문서는 공개 v1, 로컬 v2 RC, 공개 v2를 분리하고 실행한 검사만 `PASS`로 기록한다. 실기기 Safari처럼 실행하지 않은 항목은 `NOT_TESTED`로 남긴다.
 
-## 인스타그램 프로필 사진 후보 — 2026-07-30, `WORKTREE_ONLY`
+## 인스타그램 프로필 사진 릴리스 — 2026-07-30, `DEPLOYED`
 
 공개 v2와 아래 P7 기록 위에 14번째 도구 `/instagram-profile-picture`를 추가했다. 1080×1080은 Instagram의 공식 의무 픽셀값이 아니라 픽셀핏 서비스 출력값이다. 사진을 정사각형으로 cover-crop하지 않고 작은 원 안에 contain 배치하며, 원 크기·사진 크기와 위치·테두리 두께·테두리/원 안/바깥 캔버스 색을 조절할 수 있다. 결과는 PNG 또는 JPEG로 만들고 형식과 1080×1080 크기를 다시 확인한다.
 
@@ -21,7 +21,10 @@
 | 인스타그램 도구 Playwright | `PASS` — Chromium·iPhone 13 WebKit 각각 파일 선택→라벤더 테마·키보드 slider 조정→1080×1080 PNG 생성·다운로드 검증, 2/2 |
 | 접근성 | `PASS` — desktop/mobile의 홈·14개 도구 초기 상태와 기존 대표 편집·결과 상태, axe serious/critical 0, 4/4. 인스타그램 도구의 결과 화면은 전용 키보드 E2E와 수동 QA로 별도 확인 |
 | 수동 desktop/mobile 브라우저 QA | `PASS` — 1440×1000과 390×844에서 편집·결과 화면을 직접 확인. `output/playwright/instagram-profile/` PNG 3개, console error 0·warning 0 |
-| commit·push·배포·공개 URL | `NOT_TESTED` — 요청 범위에서 외부 배포를 실행하지 않음 |
+| commit·push | `PASS` — 기능 commit `d885ea8`, CI 안정화 commit `e854551`을 `codex/pixelfit-v2-seo-adsense`와 `main`에 fast-forward push |
+| GitHub-hosted CI | `PASS` — 최초 run `30537704253`은 Ubuntu에서 OG 생성기 검사가 Vitest 기본 5초를 1.027초 초과해 실패했다. 검사 timeout을 15초로 명시한 뒤 run `30537929028`의 전체 CI가 성공 |
+| GitHub Pages | `PASS` — run `30537929087` 배포 성공 |
+| 공개 URL smoke | `PASS` — `https://pixelfit.me/instagram-profile-picture/` HTTP 200, canonical·OG·H1·업로드 버튼·파일 형식·sitemap 28 URL을 확인. 실제 in-app browser에서 console error/warning 0, 가로 overflow 없음, AdSense loader 0 |
 
 알려진 build 경고는 기존 Worker chunk 간 circular-dependency 경고 두 건이며 정적 export와 위 브라우저 검증은 통과했다. 실기기 Instagram 앱 업로드, 앱 자체 리샘플링·원형 마스크와 실기기 Safari는 실행하지 않았으므로 `NOT_TESTED`다.
 

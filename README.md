@@ -12,7 +12,7 @@
 | `pixelfit.me` 공개 v2 | `PASS` | DNS·GitHub Pages·apex/`www` TLS·HTTPS 강제·Search Console 소유권·27 URL sitemap과 공개 정적 자산 확인 완료 |
 | 2026-07-26 P6 로컬 보강 후보 | `PASS` — `WORKTREE_ONLY` | 단위 144개, 브라우저 45 passed·1 intended skip, 접근성 4개, 이중 export, 모바일·데스크톱 Lighthouse 10개 검증. 미배포 |
 | 2026-07-26 P7 콘텐츠·신뢰·모바일 후보 | `PASS` — `WORKTREE_ONLY` | 단위 49 files·206/206, E2E 48 passed·2 intended skips, 접근성 4/4, `pnpm check`의 Pages/custom verifier 617/618 checks와 `build:custom:test` 618 checks, 자체 sample 22개·압축 썸네일 4개·OG 23개를 확인했다. 미배포다. |
-| 2026-07-30 인스타그램 프로필 사진 후보 | `PASS` — `WORKTREE_ONLY` | 1080×1080 서비스 출력, 사진 전체를 작은 원 안에 맞추는 contain 배치와 색 테두리·안쪽 원·바깥 캔버스를 추가했다. 단위 50 files·210/210, Pages/custom verifier 637/638 checks, 전용 E2E desktop/mobile 2/2, axe 4/4와 수동 화면을 확인했다. 미배포다. |
+| 2026-07-30 인스타그램 프로필 사진 릴리스 | `PASS` — `DEPLOYED` | 1080×1080 서비스 출력, 사진 전체를 작은 원 안에 맞추는 contain 배치와 색 테두리·안쪽 원·바깥 캔버스를 추가했다. 단위 50 files·210/210, Pages/custom verifier 637/638 checks, E2E 50 passed·2 intended skips, axe 4/4와 공개 브라우저 smoke를 통과했다. GitHub Actions CI·Pages 성공 후 `https://pixelfit.me/instagram-profile-picture/`에 배포했다. |
 | AdSense 심사 | `IN_PROGRESS` | 루트 `ads.txt` 소유권 확인과 사이트 검토 요청 완료, 계정 표시는 `준비 중`; CMP·광고 제공은 계속 OFF |
 
 공개 v1의 성공 기록은 v2 RC의 공개 배포 증거가 아니다. 명령별 실제 결과와 미실행 항목은 [현재 상태](./docs/STATUS.md), 출시 경계는 [출시 체크리스트](./docs/RELEASE_CHECKLIST.md)를 기준으로 확인한다.
