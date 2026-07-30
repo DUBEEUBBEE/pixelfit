@@ -13,7 +13,8 @@ async function downloadedBytes(page: Page, trigger: Locator, filename: string): 
   return readFile(path);
 }
 
-test("사진 압축은 실제 목표 바이트 이하 JPEG를 내려받는다", async ({ page }) => {
+test("사진 압축은 실제 목표 바이트 이하 JPEG를 내려받는다", async ({ page, qaGuard }) => {
+  qaGuard.protectOutgoingValues("compress.png");
   await page.goto("/image-compressor");
   await page.waitForLoadState("networkidle");
   await page.getByLabel("사진 또는 파일 선택").setInputFiles({ name: "compress.png", mimeType: "image/png", buffer: makePng(640, 800) });
@@ -28,11 +29,21 @@ test("사진 압축은 실제 목표 바이트 이하 JPEG를 내려받는다", 
   expect(readImageDimensions(bytes)).toEqual({ width: 640, height: 800 });
 });
 
-test("크기 조절은 비율 잠금 계산과 실제 PNG 픽셀을 일치시킨다", async ({ page }) => {
+test("크기 조절은 비율 잠금 계산과 실제 PNG 픽셀을 일치시킨다", async ({ page, qaGuard }) => {
+  qaGuard.protectOutgoingValues("resize.png");
   await page.goto("/image-resizer");
   await page.waitForLoadState("networkidle");
   await page.getByLabel("사진 또는 파일 선택").setInputFiles({ name: "resize.png", mimeType: "image/png", buffer: makePng(640, 800) });
   await expect(page.getByRole("heading", { name: "크기 지정 방식" })).toBeVisible();
+  const ratioLock = page.getByLabel(/원본 비율 잠금/);
+  await page.getByRole("button", { name: "1920×1080", exact: true }).click();
+  await expect(ratioLock).not.toBeChecked();
+  await expect(page.getByLabel("가로(px)")).toHaveValue("1920");
+  await expect(page.getByLabel("세로(px)")).toHaveValue("1080");
+  await ratioLock.check();
+  await expect(page.getByLabel("가로(px)")).toHaveValue("1920");
+  await expect(page.getByLabel("세로(px)")).toHaveValue("2400");
+  await expect(page.getByRole("status")).toContainText("예상 출력 1920×2400px");
   await page.getByLabel("가로(px)").fill("320");
   await expect(page.getByLabel("세로(px)")).toHaveValue("400");
   await page.getByRole("button", { name: "새 크기로 만들기" }).click();
@@ -42,11 +53,12 @@ test("크기 조절은 비율 잠금 계산과 실제 PNG 픽셀을 일치시킨
   expect(readImageDimensions(bytes)).toEqual({ width: 320, height: 400 });
 });
 
-test("형식 변환은 메타데이터를 빼고 지원되는 실제 출력 형식으로 저장한다", async ({ page }) => {
+test("형식 변환은 메타데이터를 빼고 지원되는 실제 출력 형식으로 저장한다", async ({ page, qaGuard }) => {
+  qaGuard.protectOutgoingValues("convert.png");
   await page.goto("/image-converter");
   await page.waitForLoadState("networkidle");
   await page.getByLabel("사진 또는 파일 선택").setInputFiles({ name: "convert.png", mimeType: "image/png", buffer: makePng(320, 400, true) });
-  await expect(page.getByText(/실제 파일 서명으로 확인한 입력 형식/)).toBeVisible();
+  await expect(page.getByText(/실제 파일 내용으로 확인한 입력 형식/)).toBeVisible();
   await page.getByRole("button", { name: "WEBP", exact: true }).click();
   await page.getByRole("button", { name: "WEBP 파일 만들기" }).click();
   const resultHeading = page.getByRole("heading", { name: "변환 결과의 형식과 크기를 확인했습니다." });

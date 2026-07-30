@@ -160,9 +160,9 @@ const rawPresets = [
     allowedOperations: ["metadata-strip"],
     forbiddenOperations: ["retouch", "generative-fill"],
     compliance: { approvalGuaranteed: false, disclaimer: "알려진 개인정보성 메타데이터를 정리합니다. 모든 비식별성을 보장하지는 않습니다." },
-    checks: [{ id: "reparse", label: "선택 필드 제거 후 재검사", automated: true }, { id: "pixel-payload", label: "압축 픽셀 payload 유지", automated: true, limitation: "지원되는 JPEG·PNG·WebP 구조에서 확인합니다." }],
+    checks: [{ id: "reparse", label: "선택 정보 제거 후 다시 확인", automated: true }, { id: "pixel-payload", label: "실제 사진 내용 유지", automated: true, limitation: "지원되는 JPEG·PNG·WebP 파일에서 확인합니다." }],
     faqs: [
-      { question: "사진 화질이 바뀌나요?", answer: "지원 형식에서는 픽셀 payload를 다시 인코딩하지 않고 메타데이터 구역만 정리합니다." },
+      { question: "사진 화질이 바뀌나요?", answer: "지원 형식에서는 실제 사진 내용을 다시 저장하지 않고 촬영 정보 구역만 정리합니다." },
       { question: "Content Credentials도 지우나요?", answer: "아니요. 알려진 C2PA·JUMBF 등 출처 정보는 제거 대상으로 제공하지 않습니다." },
       { question: "HEIC도 지원하나요?", answer: "현재는 안정성과 번들 크기 때문에 JPEG·PNG·WebP만 지원하며 외부 변환 서버를 사용하지 않습니다." },
     ],

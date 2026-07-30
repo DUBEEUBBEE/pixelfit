@@ -1,6 +1,6 @@
 import { render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { brand } from "@/config/brand";
+import { brand, publicUrl } from "@/config/brand";
 import { getGuide } from "@/config/guides";
 import { GuideArticle } from "./GuideArticle";
 
@@ -26,15 +26,26 @@ describe("GuideArticle", () => {
 
     const structuredData = [...container.querySelectorAll<HTMLScriptElement>('script[type="application/ld+json"]')]
       .map((script) => JSON.parse(script.innerHTML));
+    const canonical = publicUrl(`/guide/${guide.slug}`);
     expect(structuredData.map((item) => item["@type"])).toEqual(["BreadcrumbList", "Article"]);
     expect(structuredData[1]).toMatchObject({
-      author: { "@type": "Organization", name: "픽셀핏 운영자" },
-      publisher: { "@type": "Organization", name: "픽셀핏 운영자" },
+      author: { "@type": "Person", name: "DUBEEUBBEE", url: publicUrl("/about") },
+      publisher: {
+        "@type": "Organization",
+        name: "픽셀핏",
+        alternateName: "PixelFit",
+        url: publicUrl("/"),
+        email: "wodnd0823@gmail.com",
+      },
+      url: canonical,
+      mainEntityOfPage: canonical,
     });
     expect(JSON.stringify(structuredData)).not.toContain("FAQPage");
     expect(structuredData[1].dateModified).toBe(guide.seo.contentUpdatedAt);
     expect(structuredData[1].datePublished).toBe(guide.seo.contentPublishedAt);
     expect(structuredData[1].author.name).toBe(brand.operatorName);
     expect(structuredData[1].citation).toBe(guide.source.url);
+    expect(structuredData[0].itemListElement.at(-1)?.item).toBe(canonical);
+    expect(structuredData[1].image.url).toBe(publicUrl(guide.seo.ogImage));
   });
 });

@@ -6,12 +6,12 @@ import { tools } from "@/config/tools";
 export const dynamic = "force-static";
 
 const staticRoutes = [
-  { path: "/", updatedAt: "2026-07-24" },
-  { path: "/about", updatedAt: "2026-07-24" },
-  { path: "/contact", updatedAt: "2026-07-23" },
-  { path: "/privacy", updatedAt: "2026-07-24" },
-  { path: "/terms", updatedAt: "2026-07-23" },
-  { path: "/guide", updatedAt: "2026-07-23" },
+  { path: "/", updatedAt: "2026-07-26" },
+  { path: "/about", updatedAt: "2026-07-26" },
+  { path: "/contact", updatedAt: "2026-07-26" },
+  { path: "/privacy", updatedAt: "2026-07-26" },
+  { path: "/terms", updatedAt: "2026-07-26" },
+  { path: "/guide", updatedAt: "2026-07-26" },
 ] as const;
 
 export default function sitemap(): MetadataRoute.Sitemap {

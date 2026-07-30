@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  DEFAULT_CONTACT_EMAIL,
   DEFAULT_CONTACT_URL,
   DEFAULT_OPERATOR_NAME,
   DEFAULT_SITE_URL,
@@ -15,7 +16,7 @@ describe("environment configuration", () => {
     expect(result.siteUrl).toBe(DEFAULT_SITE_URL);
     expect(result.basePath).toBe("");
     expect(result.contactUrl).toBe(DEFAULT_CONTACT_URL);
-    expect(result.contactEmail).toBeUndefined();
+    expect(result.contactEmail).toBe(DEFAULT_CONTACT_EMAIL);
     expect(result.operatorName).toBe(DEFAULT_OPERATOR_NAME);
     expect(result.adsense.ready).toBe(false);
     expect(result.googleSiteVerification).toBeUndefined();
@@ -47,7 +48,7 @@ describe("environment configuration", () => {
   it("falls back from invalid optional contact fields without exposing fake addresses", () => {
     const result = parseEnvironment({ CONTACT_EMAIL: "not-an-email", CONTACT_URL: "javascript:alert(1)" });
 
-    expect(result.contactEmail).toBeUndefined();
+    expect(result.contactEmail).toBe(DEFAULT_CONTACT_EMAIL);
     expect(result.contactUrl).toBe(DEFAULT_CONTACT_URL);
     expect(result.warnings).toHaveLength(2);
   });

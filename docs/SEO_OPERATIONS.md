@@ -1,6 +1,6 @@
 # SEO operations
 
-Last verified: 2026-07-25
+Last verified: 2026-07-26
 
 This document separates build-time SEO readiness from external search-engine operations. Source changes do not prove crawling, indexing, rich-result eligibility, ranking, or ownership verification.
 
@@ -34,12 +34,12 @@ Official references:
 
 The emitted types are deliberately narrow:
 
-- home: `WebSite` only;
+- home: `WebSite` and a generic `WebApplication`;
 - guide hub: `ItemList` only;
-- tool routes: `BreadcrumbList` only;
+- tool routes: `BreadcrumbList` and a generic `WebApplication`;
 - guide detail routes: `BreadcrumbList` and `Article`.
 
-Use structured data only when every property is visible or otherwise supported by the page. PixelFit does not emit home `WebApplication` or tool `SoftwareApplication` markup because the current pages have no real price/offer plus eligible user rating or review evidence for the software-app rich-result contract. Do not fabricate authors, organizations, reviews, ratings, dates, offers, or approval claims.
+Use structured data only when every property is visible or otherwise supported by the page. PixelFit's generic `WebApplication` objects contain factual identity, canonical URL, description, image, browser requirements and content dates; they do not claim Google software-app rich-result eligibility. Because there is no real offer plus eligible user rating or review evidence, PixelFit emits no `offers`, `review`, `aggregateRating` or `SoftwareApplication` markup. Do not fabricate authors, organizations, reviews, ratings, dates, offers or approval claims.
 
 Google stopped showing FAQ rich results on 2026-05-07 and removed its FAQ feature documentation on 2026-06-15. Visible FAQ content can remain useful to readers, but PixelFit should not emit `FAQPage` JSON-LD for a Google rich-result benefit that no longer exists. Structured data validity never guarantees a special search appearance.
 

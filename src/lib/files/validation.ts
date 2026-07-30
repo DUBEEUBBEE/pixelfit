@@ -1,4 +1,4 @@
-import { detectImageType, typeFromMime, type SupportedImageType } from "./signatures";
+import { detectImageType, parseImageDimensions, typeFromMime, type SupportedImageType } from "./signatures";
 
 export const MAX_IMAGE_EDGE = 16_384;
 
@@ -14,7 +14,11 @@ export class ImageValidationError extends Error {
 
 export type ValidatedFile = { type: SupportedImageType; bytes: Uint8Array };
 
-export async function validateImageFile(file: File, maxBytes = 25 * 1024 * 1024): Promise<ValidatedFile> {
+export async function validateImageFile(
+  file: File,
+  maxBytes = 25 * 1024 * 1024,
+  maxPixels = 40_000_000,
+): Promise<ValidatedFile> {
   if (file.size === 0) throw new ImageValidationError("empty", "빈 파일입니다. JPEG, PNG 또는 WebP 사진을 다시 선택해 주세요.");
   if (file.size > maxBytes) throw new ImageValidationError("too-large", `파일이 너무 큽니다. ${formatBytes(maxBytes)} 이하 사진을 선택해 주세요.`);
   const bytes = new Uint8Array(await file.arrayBuffer());
@@ -23,6 +27,13 @@ export async function validateImageFile(file: File, maxBytes = 25 * 1024 * 1024)
   const declared = file.type ? typeFromMime(file.type) : null;
   if (file.type && (!declared || declared !== type)) {
     throw new ImageValidationError("mismatch", "파일 형식 표시와 실제 내용이 다릅니다. 신뢰할 수 있는 앱에서 다시 저장한 사진을 선택해 주세요.");
+  }
+  try {
+    const dimensions = parseImageDimensions(bytes, type);
+    validatePixelCount(dimensions.width, dimensions.height, maxPixels);
+  } catch (error) {
+    if (error instanceof ImageValidationError) throw error;
+    throw new ImageValidationError("decode", "사진 헤더에서 크기를 확인할 수 없습니다. 손상되지 않은 JPEG, PNG 또는 WebP 파일을 다시 선택해 주세요.");
   }
   return { type, bytes };
 }

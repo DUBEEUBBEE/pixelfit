@@ -1,6 +1,6 @@
 # 픽셀핏 구현 계획
 
-기준일: 2026-07-23
+기준일: 2026-07-30
 
 ## v2 확장 마일스톤
 
@@ -12,6 +12,9 @@
 - [x] P3: 압축·리사이즈·형식 변환·소셜 이미지 묶음 도구
 - [x] P4: YouTube 썸네일·네컷 사진·필름 사진 도구와 메모리 전용 다음 도구 전달
 - [x] P5: 홈 카테고리·별칭 검색·내부 링크, 접근성·성능, 이중 빌드와 최종 QA
+- [x] P6: 입력 헤더 방어·모든 결과 재검증·SNS/썸네일 Worker·SEO URL 회귀 검사·13도구 접근성 범위와 현재 문서 동기화
+- [x] P7: 실제 운영자·문의·신뢰 정보, 자체 제작 결과 예시, 홈 검색·카테고리·JavaScript-off 전체 링크, 모바일 메뉴, 한국어 OG, 독립 게시/수정일·평이한 가이드 문구, 같은 사진 다음 작업·조건부 Web Share와 최종 QA
+- [x] P8: 인스타그램 프로필 사진용 작은 원 contain 배치, 색 테두리·여백·캔버스 편집, 1080×1080 PNG/JPEG 검증과 desktop/mobile QA
 
 커밋·푸시·배포, Search Console 변경, DNS·AdSense 계정·CMP 같은 외부 운영 변경은 이 계획의 로컬 구현 범위에 포함하지 않는다.
 
@@ -38,9 +41,18 @@ pnpm check
 
 `pnpm check`는 lint, typecheck, unit/component test, build를 묶지만 Playwright E2E는 별도 실행한다.
 
+P7 자체 제작 샘플·OG 자산 생성과 결정성 검증 명령:
+
+```bash
+pnpm generate:assets
+pnpm verify:assets
+```
+
+`generate:assets`는 full PNG 4개와 SVG 18개로 구성된 자체 제작 본 샘플 22개, 압축 갤러리 전용 480×320 PNG 썸네일 4개와 한국어 OG PNG 24개를 다시 만든다. 압축 full PNG는 실제 압축 엔진 결과가 아니라 색 단계와 세부 묘사를 조절한 비교 fixture로 표시한다. `verify:assets`는 저장소 파일이 같은 입력에서 다시 만들어지는 결과와 일치하는지 검사하며, 본 샘플·썸네일의 선언·물리 파일 집합 일치와 고아 파일 0개도 확인한다. 개별 확인이 필요하면 `pnpm generate:samples`, `pnpm verify:samples`, `pnpm generate:og`, `node scripts/generate-og.mjs --check`를 사용할 수 있다.
+
 ## 공개 v1 구현 계획 — 보존 기록
 
-아래 M0~M10은 2026-07-22 공개 v1의 구현 순서를 보존한다. v2 완료 상태와 현재 수치는 위 P0~P5 및 [STATUS.md](./STATUS.md)를 따른다.
+아래 M0~M10은 2026-07-22 공개 v1의 구현 순서를 보존한다. v2 완료 상태와 현재 수치는 위 P0~P7 및 [STATUS.md](./STATUS.md)를 따른다.
 
 ## M0. 저장소 분석과 설계
 

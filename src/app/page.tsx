@@ -23,7 +23,21 @@ export const metadata: Metadata = {
 
 export default function HomePage() {
   const toolSearchItems = tools.map(toToolSearchSummary);
-  const website = { "@context": "https://schema.org", "@type": "WebSite", name: brand.name, alternateName: "PixelFit", url: publicUrl("/"), inLanguage: "ko-KR" };
+  const website = { "@context": "https://schema.org", "@type": "WebSite", name: brand.name, alternateName: brand.alternateName, url: publicUrl("/"), inLanguage: "ko-KR" };
+  const webApplication = {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    name: brand.name,
+    alternateName: brand.alternateName,
+    url: publicUrl("/"),
+    description: homeDescription,
+    applicationCategory: "MultimediaApplication",
+    operatingSystem: "웹 브라우저",
+    browserRequirements: "JavaScript와 HTML5 Canvas를 지원하는 최신 웹 브라우저",
+    inLanguage: "ko-KR",
+    image: homeImage,
+    isAccessibleForFree: true,
+  };
   return (
     <>
       <section className="hero site-shell">
@@ -31,7 +45,7 @@ export default function HomePage() {
         <h1>{copy.hero.title}</h1>
         <p className="hero-lead">{copy.hero.description}</p>
         <p className="privacy-pill"><LockKeyhole size={17} aria-hidden="true" />{copy.hero.privacy}</p>
-        <div id="tools"><ToolSearch presets={toolSearchItems} categories={homeCategories} /></div>
+        <div id="tools" className="home-tool-discovery"><ToolSearch presets={toolSearchItems} categories={homeCategories} /></div>
       </section>
 
       <section className="section site-shell" aria-labelledby="steps-title">
@@ -47,10 +61,10 @@ export default function HomePage() {
         <div className="trust-panel">
           <div><span className="eyebrow">로컬 우선 설계</span><h2>사진이 밖으로 나가지 않는 가장 단순한 방법.</h2></div>
           <div className="trust-list">
-            <div className="trust-item"><WifiOff size={22} aria-hidden="true" /><div><strong>업로드 API 없음</strong><span>이미지 Blob이나 얼굴 좌표를 보내는 서버 경로를 만들지 않았습니다.</span></div></div>
+            <div className="trust-item"><WifiOff size={22} aria-hidden="true" /><div><strong>사진 업로드 없음</strong><span>사진 파일이나 사진에서 찾은 얼굴 위치를 서버로 보내지 않습니다.</span></div></div>
             <div className="trust-item"><ShieldCheck size={22} aria-hidden="true" /><div><strong>브라우저 메모리만 사용</strong><span>새로고침하면 작업이 사라지고 localStorage·IndexedDB에 사진을 저장하지 않습니다.</span></div></div>
             <div className="trust-item"><LockKeyhole size={22} aria-hidden="true" /><div><strong>출처 정보는 우회하지 않음</strong><span>개인정보성 메타데이터만 선택하며 C2PA 같은 출처 표시는 제거 대상으로 제공하지 않습니다.</span></div></div>
-            <Link className="card-link" href="/privacy">개인정보 처리 방식 자세히 보기 <ArrowRight size={17} /></Link>
+            <Link className="card-link" href="/privacy" prefetch={false}>개인정보 처리 방식 자세히 보기 <ArrowRight size={17} /></Link>
           </div>
         </div>
       </section>
@@ -64,6 +78,7 @@ export default function HomePage() {
         </div>
       </section>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(website).replace(/</g, "\\u003c") }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(webApplication).replace(/</g, "\\u003c") }} />
     </>
   );
 }

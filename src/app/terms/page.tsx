@@ -8,7 +8,7 @@ export default function TermsPage() {
     <div className="page-content site-shell">
       <article className="prose">
         <h1>이용약관</h1>
-        <p>시행일 및 최종 검토일: 2026년 7월 23일</p>
+        <p>시행일: 2026년 7월 23일 · 최종 검토일: 2026년 7월 26일</p>
 
         <h2>1. 서비스 성격</h2>
         <p>{brand.name}은 사용자가 선택한 이미지를 브라우저에서 규격에 맞게 처리하는 보조 도구입니다. 공공기관, YouTube, Google, Naver 또는 다른 제출처가 운영하거나 인증한 서비스가 아닙니다.</p>
@@ -29,7 +29,8 @@ export default function TermsPage() {
         <p>공식 규격, 브라우저 지원, 보안 또는 운영 여건 변화에 따라 기능과 문서가 변경될 수 있습니다. 중요한 작업은 원본을 별도로 보관하고 결과를 직접 검수해야 합니다.</p>
 
         <h2>7. 문의</h2>
-        <p>운영자: {brand.operatorName}<br />운영 문의: <a href={brand.contactHref}>{brand.contactLabel}</a></p>
+        <p>운영자: {brand.operatorName}<br />운영 문의: <a href={brand.contactHref}>{brand.contactEmail}</a></p>
+        <p>여권사진, 얼굴 사진, 신분증 원본처럼 민감한 사진은 문의 이메일이나 공개 GitHub Issue에 첨부하지 마세요.</p>
       </article>
     </div>
   );

@@ -1,13 +1,24 @@
 import { access, readFile, readdir } from "node:fs/promises";
 import path from "node:path";
+import { resolveExpectedPublicIdentity } from "./static-export-identity.mjs";
 
 const PAGE_SITE_URL = "https://dubeeubbee.github.io/pixelfit";
 const PAGE_BASE_PATH = "/pixelfit";
-const DEFAULT_SITEMAP_URL_COUNT = 27;
+const DEFAULT_SITEMAP_URL_COUNT = 28;
 const TEXT_EXTENSIONS = new Set([".css", ".html", ".js", ".json", ".map", ".txt", ".webmanifest", ".xml"]);
 const ADSENSE_MARKERS = ["pagead2.googlesyndication.com", "adsbygoogle", "data-pixelfit-adsense"];
 const STATIC_ROUTE_PATHS = new Set(["/", "/about", "/contact", "/guide", "/privacy", "/terms"]);
-const UNSUPPORTED_STRUCTURED_DATA_TYPES = new Set(["SoftwareApplication", "TechArticle", "WebApplication"]);
+const UNSUPPORTED_STRUCTURED_DATA_TYPES = new Set(["FAQPage", "SoftwareApplication", "TechArticle"]);
+const {
+  contactEmail: EXPECTED_CONTACT_EMAIL,
+  operatorName: EXPECTED_OPERATOR_NAME,
+} = resolveExpectedPublicIdentity(process.env);
+const FORBIDDEN_PRODUCTION_TEXT = [
+  "픽셀핏 운영자",
+  "GitHub Issues 문의만 표시",
+  "이메일 미설정",
+  "실제 배포 전 이메일을 설정",
+].filter((text) => text !== EXPECTED_OPERATOR_NAME && text !== EXPECTED_CONTACT_EMAIL);
 
 const argumentsMap = new Map(process.argv.slice(2).map((argument) => {
   const [key, ...value] = argument.split("=");
@@ -19,9 +30,9 @@ if (argumentsMap.has("--help")) {
     "Usage: node scripts/verify-static-export.mjs --mode=pages|custom",
     "",
     "Environment:",
-    "  PIXELFIT_EXPECTED_SITEMAP_URLS  Expected sitemap URL count (default: 27)",
+    "  PIXELFIT_EXPECTED_SITEMAP_URLS  Expected sitemap URL count (default: 28)",
     "  NEXT_PUBLIC_CUSTOM_DOMAIN or CUSTOM_DOMAIN is required in custom mode.",
-    "  AdSense and URL environment variables must match the preceding build.",
+    "  Identity, AdSense, and URL environment variables must match the preceding build.",
     "",
   ].join("\n"));
   process.exit(0);
@@ -83,9 +94,18 @@ function findCanonical(html) {
   return tag ? getAttribute(tag, "href") : undefined;
 }
 
-function findOpenGraphImage(html) {
-  const tag = tags(html, "meta").find((candidate) => getAttribute(candidate, "property") === "og:image");
-  return tag ? getAttribute(tag, "content") : undefined;
+function findOpenGraphValues(html, property) {
+  return tags(html, "meta")
+    .filter((candidate) => getAttribute(candidate, "property") === property)
+    .map((tag) => getAttribute(tag, "content"))
+    .filter((value) => typeof value === "string" && value.length > 0);
+}
+
+function topLevelJsonLdObjects(value) {
+  if (Array.isArray(value)) return value.flatMap(topLevelJsonLdObjects);
+  if (!value || typeof value !== "object") return [];
+  if (Array.isArray(value["@graph"])) return value["@graph"].flatMap(topLevelJsonLdObjects);
+  return [value];
 }
 
 function topLevelJsonLdTypes(value) {
@@ -98,12 +118,169 @@ function topLevelJsonLdTypes(value) {
 }
 
 function expectedStructuredDataTypes(routePath) {
-  if (routePath === "/") return ["WebSite"];
+  if (routePath === "/") return ["WebApplication", "WebSite"];
   if (routePath === "/about") return ["Organization"];
   if (routePath === "/guide") return ["ItemList"];
   if (routePath.startsWith("/guide/")) return ["Article", "BreadcrumbList"];
-  if (!STATIC_ROUTE_PATHS.has(routePath)) return ["BreadcrumbList"];
+  if (!STATIC_ROUTE_PATHS.has(routePath)) return ["BreadcrumbList", "WebApplication"];
   return [];
+}
+
+function structuredUrl(value) {
+  if (typeof value === "string") return value;
+  if (!value || typeof value !== "object" || Array.isArray(value)) return undefined;
+  if (typeof value["@id"] === "string") return value["@id"];
+  return typeof value.url === "string" ? value.url : undefined;
+}
+
+function structuredImageUrls(value) {
+  if (Array.isArray(value)) return value.flatMap(structuredImageUrls);
+  if (typeof value === "string") return [value];
+  if (!value || typeof value !== "object") return [];
+  const imageUrl = structuredUrl(value) ?? (typeof value.contentUrl === "string" ? value.contentUrl : undefined);
+  return imageUrl ? [imageUrl] : [];
+}
+
+function inspectOrganization(organization, htmlLabel, contextLabel) {
+  const expectedRootUrl = `${expectedSiteUrl}/`;
+  const contactPoints = Array.isArray(organization?.contactPoint)
+    ? organization.contactPoint
+    : organization?.contactPoint ? [organization.contactPoint] : [];
+  const contactPoint = contactPoints.find((candidate) => (
+    candidate
+    && typeof candidate === "object"
+    && topLevelJsonLdTypes(candidate).includes("ContactPoint")
+  ));
+  const availableLanguages = Array.isArray(contactPoint?.availableLanguage)
+    ? contactPoint.availableLanguage
+    : typeof contactPoint?.availableLanguage === "string" ? [contactPoint.availableLanguage] : [];
+
+  check(
+    organization?.name === "픽셀핏" && organization?.alternateName === "PixelFit",
+    `${contextLabel} Organization 이름: 픽셀핏/PixelFit`,
+    `${htmlLabel}: ${contextLabel} Organization 이름이 실제 서비스 identity와 다릅니다.`,
+  );
+  check(
+    structuredUrl(organization?.url) === expectedRootUrl,
+    `${contextLabel} Organization site root URL: ${expectedRootUrl}`,
+    `${htmlLabel}: ${contextLabel} Organization URL은 페이지 canonical이 아니라 site root여야 합니다. expected=${expectedRootUrl} actual=${structuredUrl(organization?.url) ?? "MISSING"}`,
+  );
+  check(
+    organization?.email === EXPECTED_CONTACT_EMAIL,
+    `${contextLabel} Organization email: ${EXPECTED_CONTACT_EMAIL}`,
+    `${htmlLabel}: ${contextLabel} Organization email이 실제 공개 이메일과 다릅니다. actual=${organization?.email ?? "MISSING"}`,
+  );
+  check(
+    contactPoint?.email === EXPECTED_CONTACT_EMAIL
+      && availableLanguages.some((language) => language === "Korean" || language === "ko"),
+    `${contextLabel} ContactPoint email/availableLanguage=ko`,
+    `${htmlLabel}: ${contextLabel} ContactPoint에 실제 이메일과 한국어 지원 언어가 필요합니다.`,
+  );
+}
+
+function inspectStructuredData(structuredData, canonical, openGraphImage, htmlLabel) {
+  for (const item of structuredData) {
+    const types = topLevelJsonLdTypes(item);
+    const typeLabel = types.join(",") || "untyped";
+
+    if (Object.hasOwn(item, "url")) {
+      const itemUrl = structuredUrl(item.url);
+      const expectedItemUrl = types.includes("Organization") ? `${expectedSiteUrl}/` : canonical;
+      check(
+        typeof expectedItemUrl === "string" && itemUrl === expectedItemUrl,
+        `JSON-LD ${typeLabel} url: ${expectedItemUrl}`,
+        `${htmlLabel}: JSON-LD ${typeLabel} url이 예상 URL과 다릅니다. expected=${expectedItemUrl ?? "MISSING"} actual=${itemUrl ?? "MISSING"}`,
+      );
+    }
+
+    if (Object.hasOwn(item, "mainEntityOfPage")) {
+      const mainEntityUrl = structuredUrl(item.mainEntityOfPage);
+      check(
+        typeof canonical === "string" && mainEntityUrl === canonical,
+        `JSON-LD ${typeLabel} mainEntityOfPage: ${canonical}`,
+        `${htmlLabel}: JSON-LD ${typeLabel} mainEntityOfPage가 canonical과 다릅니다. expected=${canonical ?? "MISSING"} actual=${mainEntityUrl ?? "MISSING"}`,
+      );
+    }
+
+    if (types.includes("BreadcrumbList")) {
+      const elements = Array.isArray(item.itemListElement) ? item.itemListElement : [];
+      const finalItemUrl = structuredUrl(elements.at(-1)?.item);
+      check(
+        typeof canonical === "string" && finalItemUrl === canonical,
+        `JSON-LD BreadcrumbList final item: ${canonical}`,
+        `${htmlLabel}: BreadcrumbList의 마지막 item이 canonical과 다릅니다. expected=${canonical ?? "MISSING"} actual=${finalItemUrl ?? "MISSING"}`,
+      );
+    }
+
+    if (Object.hasOwn(item, "image")) {
+      const imageUrls = structuredImageUrls(item.image);
+      check(
+        typeof openGraphImage === "string"
+          && imageUrls.length > 0
+          && imageUrls.every((imageUrl) => imageUrl === openGraphImage),
+        `JSON-LD ${typeLabel} image: ${openGraphImage}`,
+        `${htmlLabel}: JSON-LD ${typeLabel} image가 og:image와 다릅니다. expected=${openGraphImage ?? "MISSING"} actual=${imageUrls.join(",") || "MISSING"}`,
+      );
+    }
+
+    if (types.includes("WebApplication")) {
+      const unsupportedClaims = ["offers", "review", "aggregateRating"].filter((property) => Object.hasOwn(item, property));
+      check(
+        unsupportedClaims.length === 0,
+        `JSON-LD WebApplication 근거 없는 상업·평점 claim 없음: ${canonical}`,
+        `${htmlLabel}: generic WebApplication에 근거 계약에서 제외한 속성이 있습니다: ${unsupportedClaims.join(",")}`,
+      );
+    }
+
+    if (types.includes("Organization")) {
+      inspectOrganization(item, htmlLabel, "About");
+    }
+
+    if (types.includes("Article")) {
+      const author = item.author;
+      check(
+        topLevelJsonLdTypes(author).includes("Person")
+          && author?.name === EXPECTED_OPERATOR_NAME
+          && structuredUrl(author?.url) === `${expectedSiteUrl}/about/`,
+        `JSON-LD Article author: ${EXPECTED_OPERATOR_NAME}`,
+        `${htmlLabel}: Article author는 ${EXPECTED_OPERATOR_NAME} Person과 /about/ URL을 사용해야 합니다.`,
+      );
+      check(
+        topLevelJsonLdTypes(item.publisher).includes("Organization"),
+        "JSON-LD Article publisher Organization",
+        `${htmlLabel}: Article publisher가 Organization이 아닙니다.`,
+      );
+      inspectOrganization(item.publisher, htmlLabel, "Article publisher");
+    }
+  }
+}
+
+function inspectPublicIdentityHtml(html, routePath, htmlLabel) {
+  if (routePath !== "/about" && routePath !== "/contact" && !routePath.startsWith("/guide/")) return;
+
+  const emailAddresses = html.match(/\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/giu) ?? [];
+  const forbiddenText = FORBIDDEN_PRODUCTION_TEXT.filter((text) => html.includes(text));
+  check(
+    html.includes(EXPECTED_OPERATOR_NAME) && html.includes(EXPECTED_CONTACT_EMAIL),
+    `공개 identity 노출: ${routePath}`,
+    `${htmlLabel}: ${EXPECTED_OPERATOR_NAME}와 ${EXPECTED_CONTACT_EMAIL}이 모두 노출되어야 합니다.`,
+  );
+  check(
+    emailAddresses.length > 0
+      && emailAddresses.every((email) => email.toLowerCase() === EXPECTED_CONTACT_EMAIL.toLowerCase()),
+    `임시 이메일 없음: ${routePath}`,
+    `${htmlLabel}: 실제 공개 이메일 외의 임시 이메일이 있습니다: ${[...new Set(emailAddresses)].join(",") || "MISSING"}`,
+  );
+  check(
+    forbiddenText.length === 0,
+    `금지된 production 문구 없음: ${routePath}`,
+    `${htmlLabel}: 금지된 production 문구가 남았습니다: ${forbiddenText.join(", ")}`,
+  );
+  check(
+    !/\b(?:[a-z0-9-]+\.)+example\b/iu.test(html),
+    `.example identity 없음: ${routePath}`,
+    `${htmlLabel}: 예약 .example identity가 남았습니다.`,
+  );
 }
 
 function incrementOccurrence(map, value, publicUrl) {
@@ -237,16 +414,18 @@ for (const publicUrl of sitemapUrls) {
     `${relativeHtmlPath}: robots meta가 유일한 index,follow 계약과 다릅니다.`,
   );
 
-  const jsonLdTypes = [];
+  const structuredData = [];
   for (const match of html.matchAll(/<script\b[^>]*type=(?:"application\/ld\+json"|'application\/ld\+json')[^>]*>([\s\S]*?)<\/script>/giu)) {
     try {
-      jsonLdTypes.push(...topLevelJsonLdTypes(JSON.parse(match[1])));
+      structuredData.push(...topLevelJsonLdObjects(JSON.parse(match[1])));
     } catch {
       failures.push(`${relativeHtmlPath}: 파싱할 수 없는 JSON-LD가 있습니다.`);
     }
   }
+  const jsonLdTypes = structuredData.flatMap(topLevelJsonLdTypes);
   const routePathWithSlash = stripExpectedBasePath(new URL(publicUrl).pathname);
   const routePath = routePathWithSlash?.replace(/\/$/u, "") || "/";
+  inspectPublicIdentityHtml(html, routePath, relativeHtmlPath);
   const expectedTypes = expectedStructuredDataTypes(routePath);
   check(
     JSON.stringify([...jsonLdTypes].sort()) === JSON.stringify(expectedTypes),
@@ -259,17 +438,25 @@ for (const publicUrl of sitemapUrls) {
 
   const canonical = findCanonical(html);
   check(canonical === publicUrl, `canonical: ${publicUrl}`, `${relativeHtmlPath}: canonical이 sitemap URL과 다릅니다. expected=${publicUrl} actual=${canonical ?? "MISSING"}`);
+  const openGraphUrls = findOpenGraphValues(html, "og:url");
+  check(
+    openGraphUrls.length === 1 && openGraphUrls[0] === canonical,
+    `og:url canonical 일치: ${publicUrl}`,
+    `${relativeHtmlPath}: 유일한 og:url이 canonical과 일치해야 합니다. expected=${canonical ?? "MISSING"} actual=${openGraphUrls.join(",") || "MISSING"}`,
+  );
   inspectInternalLinks(html, relativeHtmlPath);
 
-  const ogImage = findOpenGraphImage(html);
-  if (!ogImage) {
-    failures.push(`${relativeHtmlPath}: og:image가 없습니다.`);
+  const openGraphImages = findOpenGraphValues(html, "og:image");
+  const ogImage = openGraphImages[0];
+  if (openGraphImages.length !== 1 || !ogImage) {
+    failures.push(`${relativeHtmlPath}: 유일한 og:image가 필요합니다. actual=${openGraphImages.length}개`);
   } else {
     const ogUrl = new URL(ogImage, expectedOrigin);
     const ogFile = localFileForUrl(ogUrl.href);
     if (ogUrl.origin !== expectedOrigin || !ogFile) failures.push(`${relativeHtmlPath}: og:image가 예상 origin/base path 밖입니다: ${ogImage}`);
     else ogFiles.add(ogFile);
   }
+  inspectStructuredData(structuredData, canonical, ogImage, relativeHtmlPath);
 
   const assetReferences = [...htmlReferences(html, "src"), ...htmlReferences(html, "href")].filter((value) => value.includes("/_next/"));
   nextAssetReferenceCount += assetReferences.length;
@@ -404,6 +591,11 @@ for (const filePath of productionTextFiles) {
   let content = await readFile(filePath, "utf8");
   if (mode === "custom") {
     content = content.replaceAll(expectedSiteUrl, "").replaceAll(customDomain, "");
+  }
+  for (const forbiddenText of FORBIDDEN_PRODUCTION_TEXT) {
+    if (content.includes(forbiddenText)) {
+      failures.push(`금지된 production 문구 '${forbiddenText}'가 artifact에 남았습니다: ${path.relative(outputDirectory, filePath)}`);
+    }
   }
   if (/\b(?:[a-z0-9-]+\.)+example\b/iu.test(content)) failures.push(`예약 .example 도메인이 production artifact에 남았습니다: ${path.relative(outputDirectory, filePath)}`);
 }

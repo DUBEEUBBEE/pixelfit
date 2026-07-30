@@ -1,6 +1,6 @@
 # 픽셀핏 개인정보·보안 모델
 
-기준일: 2026-07-23
+기준일: 2026-07-26
 
 ## 1. 보장 범위
 
@@ -17,8 +17,9 @@
 
 - 공개 v1은 2026-07-22에 기존 6개 도구의 개인정보 smoke 기록을 남겼다.
 - 2026-07-23 로컬 v2 RC에는 13개 도구, 같은 사진 메모리 전달과 선택적 광고 구성이 추가됐다.
+- 현재 공개 v2는 `pixelfit.me`에서 광고 loader·slot을 OFF로 유지한다. 2026-07-26 로컬 보강 후보는 QA helper가 적용된 E2E 흐름의 외부 HTTP(S) 요청·쓰기 method·`pageerror`와 console error/warning을 자동 감시한다. 기본 fixture 표식과 테스트가 명시 등록한 일부 파일명은 request URL/body 및 모든 console message에서 검사한다. 이 증거를 모든 파일명·EXIF·얼굴 bbox 또는 13개 도구 전체의 동일한 민감값 검사로 확대하지 않는다.
 
-공개 v1의 검사 결과를 재사용하지 않고 v2 privacy E2E를 별도로 실행했다. 이미지 처리 POST/PUT/PATCH 0, 같은 사진 one-shot 전달과 새로고침 소멸, local/session/IndexedDB 이미지 저장 부재, 광고 OFF DOM·초기 JS 부재가 통과했다. 광고 ON staging·CMP·실계정 네트워크 검사는 `NOT_TESTED`이며 상세 수치는 [STATUS.md](./STATUS.md)에 기록한다.
+공개 v1의 검사 결과를 재사용하지 않고 v2 privacy E2E를 별도로 실행했다. 이미지 처리 외부 요청 0, 같은 사진 one-shot 전달과 새로고침 소멸, local/session/IndexedDB 이미지 저장 부재, 광고 OFF DOM·초기 JS 부재를 검사한다. 광고 ON staging·CMP·실제 광고 네트워크 검사는 `NOT_TESTED`이며 상세 수치는 [STATUS.md](./STATUS.md)에 기록한다.
 
 ## 3. 데이터 분류
 
@@ -38,7 +39,7 @@
 ## 4. 이미지 데이터 생명주기
 
 1. 사용자가 `<input type="file">` 또는 drop으로 로컬 파일을 선택한다.
-2. 앱이 byte 크기, MIME, signature와 픽셀 한도를 확인한다.
+2. 앱이 byte 크기와 MIME/signature를 확인하고 JPEG SOF, PNG IHDR, WebP VP8/VP8L/VP8X 치수로 디코드 전 픽셀 한도를 적용한다.
 3. `createImageBitmap`, Canvas 또는 형식별 parser가 메모리에서 처리한다.
 4. 미리보기용 Object URL이 필요할 때만 `blob:` URL을 만든다.
 5. 결과 Blob/ZIP을 만들고 도구가 약속한 형식·치수·byte를 다시 검사한다.
@@ -74,7 +75,7 @@
 
 ### B. 금지된 이미지 처리 요청
 
-- 원본/파생 Blob, 픽셀, metadata 또는 얼굴 bbox를 포함한 POST/PUT/PATCH
+- 원본/파생 Blob, 픽셀, metadata 또는 얼굴 bbox를 외부 origin으로 보내는 GET/POST/PUT/PATCH/DELETE
 - 이미지 변환, 얼굴 분석, 배경 제거, 압축, 생성형 효과용 외부 API
 - 사용자의 `blob:` URL을 원격 목적지로 보내는 요청
 - 실패한 로컬 기능을 원격 모델이나 HEIC 변환 서버로 자동 대체하는 요청
@@ -138,7 +139,7 @@ SynthID, C2PA, JUMBF, Content Credentials 또는 워터마크를 탐지·제거�
 | 위험 | 통제 |
 | --- | --- |
 | 확장자를 위장한 파일 | MIME과 magic bytes 조합 검사 |
-| 압축 폭탄·초대형 이미지 | decode 전 byte/예상 픽셀, decode 후 픽셀 한도 |
+| 압축 폭탄·초대형 이미지 | 형식별 헤더 치수 기반 decode 전 byte/한 변/픽셀 한도, decode 후 교차 확인 |
 | 손상 container | 경계·길이·CRC/RIFF size 검사와 typed failure |
 | 악성 SVG | 검증된 sanitizer/rasterizer가 없으므로 입력 거부 |
 | 파일명 기반 XSS | React text 출력, 임의 HTML 삽입 금지, 결과명 정규화 |
@@ -158,8 +159,10 @@ static export는 앱 코드만으로 임의의 HTTP response header를 보장할
 
 production-like static preview에서 다음을 기록한다.
 
-- 13개 도구의 파일 선택→결과→다운로드 동안 이미지 처리 POST/PUT/PATCH 0건
-- request body와 URL에 fixture bytes, 파일명, EXIF, 얼굴 bbox 부재
+- QA helper가 적용된 E2E 흐름의 외부 HTTP(S) 요청과 POST/PUT/PATCH/DELETE
+- 기본 fixture 표식과 `protectOutgoingValues`에 명시 등록한 일부 파일명이 request URL/body 및 모든 console message에 존재하는지 여부
+- 예상하지 않은 `pageerror`, console error와 warning
+- 모든 파일명, EXIF/GPS/기기명과 얼굴 bbox는 실제 값을 보호 목록에 등록한 테스트가 있을 때만 검증 완료로 기록
 - localStorage/sessionStorage/IndexedDB/Cache Storage에 사용자 이미지 부재
 - 같은 사진 전달의 대상 제한, one-shot claim, 새로고침 소멸
 - 초기화·파일 교체·route 이동 후 이전 Object URL과 preview 해제

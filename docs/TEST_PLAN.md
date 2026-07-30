@@ -1,10 +1,10 @@
 # 픽셀핏 v2 테스트 계획
 
-기준일: 2026-07-24
+기준일: 2026-07-30
 
 ## 1. 상태와 기록 원칙
 
-이 문서는 총 13개 도구와 8개 가이드가 있는 v2의 검증 계획이다. 과거 공개 v1의 `PASS`는 새 도구, 같은 사진 전달, 광고 게이트, 가이드, OG PNG와 이중 base-path build의 증거가 아니다.
+이 문서는 현재 총 14개 도구와 8개 가이드가 있는 작업 트리의 검증 계획이다. 과거 공개 v1·v2의 `PASS`는 새 도구, 같은 사진 전달, 광고 게이트, 가이드, OG PNG와 이중 base-path build의 증거가 아니다.
 
 테스트 결과는 이 계획에 미리 채우지 않는다. 실제 실행한 명령, commit 또는 작업 트리 식별자, 시간, 브라우저, base mode와 원본 출력은 [STATUS.md](./STATUS.md)에 기록한다.
 
@@ -28,6 +28,8 @@
 
 ```bash
 pnpm install --frozen-lockfile
+pnpm generate:assets
+pnpm verify:assets
 pnpm lint
 pnpm typecheck
 pnpm test
@@ -40,7 +42,7 @@ pnpm test:a11y
 pnpm check
 ```
 
-`pnpm check`는 lint, typecheck, unit/component test, project Pages build와 `pixelfit.me` production 후보 custom-root build를 포함한다. E2E, 접근성, Lighthouse, 실제 GitHub Actions와 공개 URL 검증은 별도다.
+`pnpm generate:assets`는 자체 본 sample 22개(full PNG 4개·SVG 18개), 압축 전용 480×320 PNG thumbnail 4개와 OG PNG 24개를 결정적으로 다시 만든다. `pnpm verify:assets`는 기대 목록·치수·내용을 byte-for-byte로 확인한다. production build는 자산 생성 단계를 선행한다. `pnpm check`는 lint, typecheck, unit/component test, project Pages build와 현재 공개 host `pixelfit.me` custom-root build를 포함한다. E2E, 접근성, Lighthouse, 실제 GitHub Actions와 공개 URL 검증은 별도다.
 
 ## 3. fixture 정책
 
@@ -54,6 +56,7 @@ pnpm check
 | WebP EXIF/XMP/ICCP | RIFF 제거·size 갱신 | 코드로 생성 |
 | 균일 배경과 전경 도형 | 배경 분리 | 사람 사진 아님 |
 | 1~4개 색상/숫자 타일 | SNS·네컷 순서와 crop | 코드로 생성 |
+| 자체 제작 본 샘플 22개(full PNG 4·SVG 18) + 압축 전용 480×320 PNG 썸네일 4개 | 압축·YouTube 썸네일·네컷·필름·여권 예시 | 외부 사진·얼굴 없음, 생성기 출력·선언·물리 파일 집합 일치, 고아 파일 0 |
 | 손상·빈·MIME 위장 파일 | 오류 경계 | 최소 합성 bytes |
 | byte/pixel 경계 파일 | 메모리 보호 | 생성식과 크기 기록 |
 
@@ -63,11 +66,20 @@ pnpm check
 
 ### Registry와 콘텐츠
 
-- 도구 13개와 가이드 8개의 고유 ID/slug
+- 도구 14개와 가이드 8개의 고유 ID/slug
 - 모든 연결 도구·가이드가 실제 Registry 항목을 가리킴
 - 공식 도구는 기관, 제목, URL, 확인일 필수
 - 관행/서비스 도구는 공식 badge 금지
+- 홈 6개 용도 카테고리와 출처·용도 badge taxonomy가 Registry와 일치
+- 각 도구 hero fact가 정확히 2개이며 빈 제목·설명이 없음
+- `contentUpdatedAt >= contentPublishedAt`이고 출처 `lastVerifiedAt`을 콘텐츠 날짜로 대체하지 않음
 - 도구·가이드 OG 경로가 고유한 1200×630 PNG를 가리킴
+- 홈과 14개 도구 OG에는 한국어 제목이 있고, 가이드 OG를 포함한 전체 24개 자산이 결정적으로 검증됨
+- 5개 대상 도구의 자체 본 샘플이 총 22개(full PNG 4개·SVG 18개)이고 slug·경로·alt·width·height가 유효함
+- 압축 full PNG 네 파일의 actual bytes가 `1,045,528` / `279,843` / `110,060` / `34,154`이고 실제 stat·manifest와 일치하며, 100KB fixture만 900×600으로 축소됨
+- 압축 전용 PNG thumbnail 4개가 각각 480×320이고 대응 full PNG보다 작으며 안전한 내부 경로를 사용함
+- 압축 문구가 실제 사용자 입력의 압축 결과가 아니라 색 단계와 세부 묘사를 달리 만든 결정적 비교 fixture임을 밝힘
+- 본 샘플 22개와 thumbnail 4개의 Registry 선언·물리 파일 집합이 정확히 일치하고 고아 파일이 0개이며 digest가 `061e0431696e4a31`임
 - 콘텐츠 수정일, 출처 확인일과 공개 배포일을 혼용하지 않음
 - 화면 FAQ는 존재하되 `FAQPage` JSON-LD는 생성하지 않음
 - 가짜 review/rating/사용량/날짜 metadata 부재
@@ -108,12 +120,13 @@ pnpm check
 - 파비콘 PNG/ICO dimensions, manifest JSON, ZIP 필수 entry
 - 개인정보 parser의 선택 제거, checksum/size와 표시한 보존 속성
 
-### v2 추가 7개 도구
+### 추가 8개 도구
 
 - 압축: KB/MB 변환, 제한된 품질 탐색, 최대 축소 횟수, 목표 달성/미달 상태와 actual bytes
 - 리사이즈: 직접 치수·긴 변·퍼센트, 비율 잠금, contain/cover, 업스케일 경고
 - 변환: JPEG/PNG/WebP signature, 투명→JPEG 배경 합성, 재인코딩·metadata 문구, HEIC 거부
 - SNS 팩: 1:1·4:5·9:16 독립 crop, 원형 preview, 개별/ZIP result
+- 인스타그램 프로필: 1080×1080, 사진 전체 contain, 작은 원·사진 크기·위치, 세 가지 색과 테두리 두께, PNG/JPEG parse-back
 - YouTube 썸네일: 3840×2160, 16:9, template text overflow와 작은 preview
 - 네컷: 1~4장 순환 배치, 순서·crop·가로/세로·필터·날짜·문구, JPEG/PNG
 - 필름: 고정 seed 재현성, grain/vignette/light leak/date/BW/저채도/flash, 비교·reset
@@ -135,10 +148,22 @@ pnpm check
 3. 도구별 설정을 변경하고 화면 상태와 접근 가능한 이름을 확인한다.
 4. 실제 결과를 생성하고 download event를 수집한다.
 5. 저장 파일을 테스트 process에서 열어 형식·픽셀·byte·ZIP entry를 검사한다.
-6. 처리되지 않은 page error와 예상 밖 console error가 0인지 확인한다.
+6. 처리되지 않은 pageerror와 예상 밖 console error·warning이 0인지 확인한다.
 7. route 이동, 직접 URL 접근과 새로고침을 확인한다.
 
-## 6. 13개 도구 E2E 계약
+### 홈·헤더·샘플 추가 계약
+
+- desktop header와 mobile menu의 열기·닫기, focus 이동, `aria-expanded`·accessible name과 route 이동
+- compact home hero가 390×844와 320px에서 겹치거나 잘리지 않고 검색 입력을 가리지 않음
+- 홈 다중 검색어가 AND 조건으로 동작하고, 정확히 6개 카테고리·빠른 검색·결과 없음 상태가 일치
+- JavaScript를 끈 홈에서도 14개 도구 링크를 모두 발견하고 직접 이동 가능
+- 자체 sample gallery가 지정된 5개 도구에만 나타나고, gallery viewport 진입 전 `/samples/` 요청이 0개임
+- viewport 진입 뒤 현재 route의 예시만 요청하며 22개 본 sample의 alt·고정 치수·내부 URL과 decode 완료를 확인
+- 압축 route는 진입 뒤 480×320 thumbnail 4개만 요청하고 full PNG 4개를 요청하지 않으며, full PNG는 사용자가 `원본 크기로 보기`를 눌렀을 때만 요청
+- 압축 full PNG의 화면 표시·manifest byte가 실제 파일과 일치하고 100KB fixture만 900×600이며 외부 request를 만들지 않음
+- Web Share는 네컷사진·필름사진에서 `navigator.share`와 file `canShare`가 모두 가능할 때만 노출되고, 미지원·취소·실패에서는 다운로드 경로를 유지
+
+## 6. 14개 도구 E2E 계약
 
 | 도구 | 핵심 assertion |
 | --- | --- |
@@ -152,6 +177,7 @@ pnpm check
 | 이미지 크기 조절 | 설정 치수, ratio/contain/cover, 업스케일 경고 |
 | 이미지 형식 변환 | JPEG/PNG/WebP 실제 signature, alpha/background, HEIC 거부 |
 | SNS 이미지 세트 | 세 비율의 별도 crop과 individual/ZIP 파일 |
+| 인스타그램 프로필 사진 | 1080×1080, 사진 전체 contain, 원·테두리·캔버스 색, 조정값과 다운로드 일치 |
 | YouTube 썸네일 | 3840×2160, 16:9, template text와 preview |
 | 네컷사진 | 파일 수별 반복 순서, 두 layout, 프레임·필터·텍스트 |
 | 필름사진 | effect 변화, 동일 설정 재현, 비교·reset, 다운로드 |
@@ -165,9 +191,11 @@ pnpm check
 - 1200×630 OG PNG가 실제로 존재하고 HTTP 200/MIME이 올바름
 - 도구 CTA와 관련 가이드 링크가 base path를 존중
 - visible FAQ는 읽을 수 있으나 DOM/HTML에 `FAQPage` JSON-LD가 없음
-- 홈 `WebSite`, 가이드 허브 `ItemList`, 도구 `BreadcrumbList`, 가이드 상세 `BreadcrumbList`/`Article`만 parse 가능
-- 실제 price·review·rating 근거가 없는 `WebApplication`/`SoftwareApplication`이 없음
-- sitemap에 13개 도구, 8개 가이드와 정보 페이지가 base mode에 맞게 포함
+- 홈 `WebSite`/일반 `WebApplication`, 도구 `BreadcrumbList`/일반 `WebApplication`, 가이드 허브 `ItemList`, 가이드 상세 `BreadcrumbList`/`Article` parse 가능
+- About `Organization`의 name·URL·email과 화면의 `DUBEEUBBEE`·문의 주소가 일치
+- 가이드 `Article`의 author `Person`과 publisher `Organization`이 같은 실제 운영자 정체성을 사용
+- 일반 `WebApplication`의 URL·image가 canonical·OG와 일치하고 근거 없는 `offers`/`review`/`aggregateRating` 및 `SoftwareApplication`이 없음
+- sitemap에 14개 도구, 8개 가이드와 정보 페이지가 base mode에 맞게 포함
 - robots와 canonical에 잘못된 host·중복 base path·가짜 연락처가 없음
 
 Search Console URL-prefix 확인 meta의 존재는 E2E로 검사할 수 있지만 속성 등록, 소유권 확인, sitemap 제출과 색인은 대신할 수 없다. 공개 HTTPS를 포함한 외부 검증을 실제로 하지 않았다면 `NOT_TESTED`다.
@@ -176,10 +204,13 @@ Search Console URL-prefix 확인 meta의 존재는 E2E로 검사할 수 있지�
 
 production-like preview에서 request와 storage를 수집한다.
 
-- 이미지 작업으로 생긴 POST/PUT/PATCH 0건
-- fixture marker, 파일명, GPS, 기기명, 얼굴 bbox가 request body/URL/console에 없음
+- 이미지 작업으로 생긴 외부 HTTP(S) 요청과 POST/PUT/PATCH/DELETE 0건
+- 기본 fixture marker와 각 테스트가 `protectOutgoingValues`로 명시 등록한 일부 파일명이 request URL/body 및 모든 console message에 없음
+- 등록하지 않은 모든 파일명, EXIF/GPS/기기명 또는 얼굴 bbox 값까지 이 가드가 검사했다고 간주하지 않음. 필요한 값은 테스트별 보호 목록에 추가하고 별도 assertion으로 검증
+- 예상하지 않은 `pageerror`, console error와 warning 0건
 - localStorage/sessionStorage/IndexedDB/Cache Storage에 이미지·파생 데이터 없음
 - 같은 사진 전달이 one-shot이며 reload에서 사라짐
+- 자체 SVG 샘플 요청은 동일 origin의 정적 GET만 사용하고 외부 host·사용자 파일 전송을 만들지 않음
 - 초기화·파일 교체·route 이동 후 이전 preview와 Object URL 해제
 - 광고 OFF: 광고 script, slot DOM, Google 광고 request 0
 - 광고 ON: 별도 build에서 safe placement만 사용, 사용자 이미지 body 부재, CMP·동의 흐름은 외부 운영 증거로 분리
@@ -191,7 +222,7 @@ production-like preview에서 request와 storage를 수집한다.
 `pnpm test:a11y` 대상은 다음을 포함한다.
 
 - 홈
-- 13개 도구의 초기 상태, 대표 upload/edit/result 상태
+- 14개 도구의 초기 상태, 대표 upload/edit/result 상태
 - 가이드 인덱스와 대표 공식·관행 가이드
 - about, privacy, terms, contact, 404
 
@@ -250,15 +281,15 @@ pnpm build:pages
 pnpm build:custom:test
 ```
 
-`build:custom:test`의 host는 로컬 계약 검사용 `.test` 값이며 실제 소유 도메인이나 DNS 적용을 뜻하지 않는다. `pnpm build`는 production 후보 `pixelfit.me`의 custom-root 계약과 verifier를 실행한다. GitHub Actions에서는 repository variable 또는 workflow 기본값을 `pnpm build:deploy`에 전달한 뒤 `pnpm verify:export`를 실행한다.
+`build:custom:test`의 host는 로컬 계약 검사용 `.test` 값이며 실제 소유 도메인이나 DNS 적용을 뜻하지 않는다. `pnpm build`는 현재 공개 host `pixelfit.me`의 custom-root 계약과 verifier를 실행한다. GitHub Actions에서는 repository variable 또는 workflow 기본값을 `pnpm build:deploy`에 전달한 뒤 `pnpm verify:export`를 실행한다.
 
 검사:
 
 - canonical과 sitemap이 root origin이며 `/pixelfit` 잔존 0
 - 내부 link와 `_next` asset이 root-relative
 - Pages `CNAME` 자동 적용을 성공으로 가정하지 않음
-- 실제 소유 도메인의 DNS, Pages Settings, TLS는 외부 검증 전 `NOT_TESTED`
-- 기존 `pixelfit.o-r.kr`의 공개 검증 결과를 새 `pixelfit.me`의 DNS·TLS·검색 소유권 증거로 재사용하지 않음
+- 실제 소유 도메인의 DNS, Pages Settings, TLS는 외부 검증 전 `NOT_TESTED`이며 완료 표시는 공개 응답 근거와 연결
+- 현재 `pixelfit.me`의 외부 성공 기록을 이후 미배포 작업 트리의 공개 검증으로 재사용하지 않음
 
 두 build가 모두 성공하고 각 `out/`을 별도로 preview해도 공개 배포 완료를 뜻하지 않는다.
 
@@ -271,7 +302,7 @@ production static preview 또는 실제 후보 URL에서 다음 대표 route를 
 - `/image-compressor`
 - `/youtube-thumbnail`
 - `/four-cut-photo`
-- 대표 가이드 1개
+- `/about`
 
 목표:
 
@@ -290,7 +321,7 @@ production static preview 또는 실제 후보 URL에서 다음 대표 route를 
 로컬 v2 release candidate가 되려면 다음 증거가 필요하다.
 
 - lint, typecheck, unit/component, production build `PASS`
-- 13개 도구 실제 다운로드 E2E `PASS`
+- 14개 도구 실제 다운로드 E2E `PASS`
 - 8개 가이드와 SEO route 검사 `PASS`
 - privacy·storage·same-photo·광고 OFF 검사 `PASS`
 - 접근성 자동 검사와 필수 수동 smoke `PASS`
@@ -303,4 +334,4 @@ production static preview 또는 실제 후보 URL에서 다음 대표 route를 
 - GitHub Pages artifact 배포와 실제 공개 URL smoke `PASS`
 - 공개 HTTPS, asset MIME, 직접 URL·새로고침과 404 동작 확인
 
-외부 계정 단계인 DNS/TLS, Search Console, Naver, AdSense 승인, CMP와 `ads.txt`는 완료된 것만 별도로 표시한다. 기존 `pixelfit.o-r.kr`은 상위 `o-r.kr/ads.txt`를 제어할 수 없어 AdSense 등록이 차단됐고, 새 후보 `pixelfit.me`는 각각의 공개·계정 검증을 새로 통과해야 한다. 어느 하나라도 증거가 없으면 이전 호스트 기록을 재사용하지 않고 해당 항목을 `NOT_TESTED` 또는 미완료로 둔다.
+외부 계정 단계인 DNS/TLS, Search Console, Naver, AdSense 승인, CMP와 `ads.txt`는 완료된 것만 별도로 표시한다. 현재 `pixelfit.me`는 DNS/TLS, Search Console, sitemap, `ads.txt` 소유권과 AdSense 검토 요청까지 확인됐고 계정은 `준비 중`이다. Naver, AdSense 최종 승인, CMP와 광고 제공은 증거가 없어 미완료로 둔다.

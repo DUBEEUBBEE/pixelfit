@@ -1,5 +1,5 @@
 import { wrapCanvasText } from "@/features/creative-tools/core";
-import { createRasterCanvas, encodeAndVerifyCanvas, getRasterContext } from "@/lib/image/encode";
+import { createRasterCanvas, encodeAndVerifyCanvas, getRasterContext, verifyEncodedBlob } from "@/lib/image/encode";
 import { calculateCoverTransform } from "@/lib/image/geometry";
 import type { ResizeDimensions } from "@/lib/image/resize";
 import { YOUTUBE_SAFE_MARGIN, YOUTUBE_THUMBNAIL_HEIGHT, YOUTUBE_THUMBNAIL_WIDTH, youtubeThumbnailTemplates } from "./templates";
@@ -14,6 +14,8 @@ export async function renderYoutubeThumbnail(
   options: YoutubeThumbnailOptions,
 ): Promise<YoutubeThumbnailResult> {
   throwIfAborted(options.signal);
+  const workerResult = await renderThumbnailInWorker(sourceDimensions, options);
+  if (workerResult) return workerResult;
   const canvas = createRasterCanvas(YOUTUBE_THUMBNAIL_WIDTH, YOUTUBE_THUMBNAIL_HEIGHT);
   const context = getRasterContext(canvas, { alpha: options.format === "png" });
   context.fillStyle = "#10151f";
@@ -76,6 +78,52 @@ export async function renderYoutubeThumbnail(
     titleLines,
     subtitleLines,
   };
+}
+
+async function renderThumbnailInWorker(
+  sourceDimensions: ResizeDimensions,
+  options: YoutubeThumbnailOptions,
+): Promise<YoutubeThumbnailResult | null> {
+  if (!options.sourceFile) return null;
+  const workerApi = await import("@/workers/creative-worker-client");
+  if (!workerApi.canUseCreativeImageWorker()) return null;
+  try {
+    const result = await workerApi.runCreativeImageWorker({
+      kind: "thumbnail",
+      file: options.sourceFile,
+      sourceWidth: sourceDimensions.width,
+      sourceHeight: sourceDimensions.height,
+      template: options.template,
+      title: options.title,
+      subtitle: options.subtitle,
+      crop: options.crop,
+      titleSize: options.titleSize,
+      accentColor: options.accentColor,
+      align: options.align,
+      format: options.format,
+      quality: options.quality,
+    }, { signal: options.signal });
+    if (result.details?.kind !== "thumbnail") throw new Error("썸네일 워커 결과 정보를 확인할 수 없습니다.");
+    throwIfAborted(options.signal);
+    const verified = await verifyEncodedBlob(result.blob, {
+      format: options.format,
+      width: YOUTUBE_THUMBNAIL_WIDTH,
+      height: YOUTUBE_THUMBNAIL_HEIGHT,
+    });
+    throwIfAborted(options.signal);
+    return {
+      blob: verified.blob,
+      filename: `youtube-thumbnail-3840x2160.${options.format === "jpeg" ? "jpg" : "png"}`,
+      format: options.format,
+      width: YOUTUBE_THUMBNAIL_WIDTH,
+      height: YOUTUBE_THUMBNAIL_HEIGHT,
+      titleLines: result.details.titleLines,
+      subtitleLines: result.details.subtitleLines,
+    };
+  } catch (error) {
+    if (error instanceof workerApi.CreativeWorkerUnavailableError) return null;
+    throw error;
+  }
 }
 
 function paintGradient(context: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D, type: "left" | "right" | "bottom" | "frame") {

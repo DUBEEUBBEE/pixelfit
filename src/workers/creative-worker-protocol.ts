@@ -1,5 +1,7 @@
 import type { FilmOptions } from "@/features/creative-tools/core";
+import type { SocialOutputId } from "@/features/creative-tools/core";
 import type { FourCutOrientation, FourCutTone } from "@/features/four-cut-photo/types";
+import type { ThumbnailTemplateId, ThumbnailTextAlign } from "@/features/youtube-thumbnail/types";
 import type { CropTransform } from "@/lib/image/geometry";
 import type { ImageOutputFormat } from "@/lib/image/encode";
 import type { ResizeFit } from "@/lib/image/resize";
@@ -74,12 +76,51 @@ export type ConvertWorkerRequest = {
   metadataPolicy: "remove" | "preserve-exact";
 };
 
-export type CreativeWorkerRequest = FilmWorkerRequest | FourCutWorkerRequest | CompressionWorkerRequest | ResizeWorkerRequest | ConvertWorkerRequest;
+export type SocialWorkerRequest = {
+  kind: "social";
+  file: Blob;
+  sourceWidth: number;
+  sourceHeight: number;
+  outputId: SocialOutputId;
+  crop: CropTransform;
+  format: "jpeg" | "png";
+  quality?: number;
+};
+
+export type ThumbnailWorkerRequest = {
+  kind: "thumbnail";
+  file: Blob;
+  sourceWidth: number;
+  sourceHeight: number;
+  template: ThumbnailTemplateId;
+  title: string;
+  subtitle: string;
+  crop: CropTransform;
+  titleSize: number;
+  accentColor: string;
+  align: ThumbnailTextAlign;
+  format: "jpeg" | "png";
+  quality?: number;
+};
+
+export type CreativeWorkerRequest =
+  | FilmWorkerRequest
+  | FourCutWorkerRequest
+  | CompressionWorkerRequest
+  | ResizeWorkerRequest
+  | ConvertWorkerRequest;
+
+export type CreativeWorkerMessageRequest =
+  | CreativeWorkerRequest
+  | SocialWorkerRequest
+  | ThumbnailWorkerRequest;
 
 export type WorkerResultDetails =
   | { kind: "compress"; quality?: number; attempts: number; downscaleSteps: number; reachedTarget: boolean; warnings: string[] }
   | { kind: "resize" }
-  | { kind: "convert"; metadataPolicy: "remove" | "preserve-exact"; metadataRemoved: boolean; metadataPreservedExactly: boolean; warnings: string[] };
+  | { kind: "convert"; metadataPolicy: "remove" | "preserve-exact"; metadataRemoved: boolean; metadataPreservedExactly: boolean; warnings: string[] }
+  | { kind: "social"; outputId: SocialOutputId }
+  | { kind: "thumbnail"; titleLines: string[]; subtitleLines: string[] };
 
 export type CreativeWorkerResponse =
   | { type: "progress"; value: number }

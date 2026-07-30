@@ -1,4 +1,4 @@
-import type { CreativeWorkerRequest, CreativeWorkerResponse, CreativeWorkerResult } from "./creative-worker-protocol";
+import type { CreativeWorkerMessageRequest, CreativeWorkerResponse, CreativeWorkerResult } from "./creative-worker-protocol";
 
 type WorkerPort = Pick<Worker, "postMessage" | "terminate"> & {
   onmessage: ((event: MessageEvent<CreativeWorkerResponse>) => void) | null;
@@ -27,7 +27,7 @@ export function canUseCreativeImageWorker(scope: typeof globalThis = globalThis)
 }
 
 export function runCreativeImageWorker(
-  request: CreativeWorkerRequest,
+  request: CreativeWorkerMessageRequest,
   options: {
     signal?: AbortSignal;
     onProgress?: (value: number) => void;

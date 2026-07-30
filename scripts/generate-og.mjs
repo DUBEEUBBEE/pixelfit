@@ -1,4 +1,5 @@
-import { mkdir, writeFile } from "node:fs/promises";
+import { createHash } from "node:crypto";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { deflateSync } from "node:zlib";
 
@@ -10,20 +11,21 @@ const WHITE = color("#ffffff");
 const MUTED = color("#627086");
 
 const cards = [
-  { id: "home", file: "home.png", title: ["IMAGE TOOLS", "MADE TO FIT"], spec: "13 TOOLS / BROWSER ONLY", motif: "home", accent: "#36c99b", second: "#ff725e" },
-  { id: "passport-photo", title: ["PASSPORT", "PHOTO"], spec: "413 X 531 PX / JPG", motif: "portrait", accent: "#30c594", second: "#69a8ff" },
-  { id: "id-photo", title: ["ID PHOTO", "3 X 4"], spec: "354 X 472 PX", motif: "id", accent: "#6faaf8", second: "#ff8a72" },
-  { id: "resident-id-photo", title: ["RESIDENT ID", "PHOTO"], spec: "413 X 531 PX", motif: "resident", accent: "#ff806a", second: "#53caa6" },
-  { id: "youtube-banner", title: ["YOUTUBE", "BANNER"], spec: "2560 X 1440 / SAFE AREA", motif: "banner", accent: "#ff665a", second: "#ffd15c" },
-  { id: "favicon-maker", title: ["FAVICON", "MAKER"], spec: "ICO / PNG / MANIFEST", motif: "favicon", accent: "#7a82ff", second: "#43d3ae" },
-  { id: "photo-privacy-cleaner", title: ["PHOTO", "PRIVACY"], spec: "EXIF / GPS / DEVICE DATA", motif: "privacy", accent: "#24b993", second: "#7aa8ff" },
-  { id: "image-compressor", title: ["IMAGE", "COMPRESSOR"], spec: "TARGET KB / MB", motif: "compressor", accent: "#ff9867", second: "#4bbf9d" },
-  { id: "image-resizer", title: ["IMAGE", "RESIZER"], spec: "PIXELS / LONG EDGE / PERCENT", motif: "resizer", accent: "#5b9df4", second: "#ffc861" },
-  { id: "image-converter", title: ["IMAGE", "CONVERTER"], spec: "JPEG / PNG / WEBP", motif: "converter", accent: "#8f78f4", second: "#54c9a7" },
-  { id: "social-image-pack", title: ["SOCIAL", "IMAGE PACK"], spec: "1:1 / 4:5 / 9:16", motif: "social", accent: "#ee6f91", second: "#6d99f7" },
-  { id: "youtube-thumbnail", title: ["YOUTUBE", "THUMBNAIL"], spec: "3840 X 2160 / 16:9", motif: "thumbnail", accent: "#ff6259", second: "#4f92ef" },
-  { id: "four-cut-photo", title: ["FOUR CUT", "PHOTO"], spec: "4 FRAMES / JPG / PNG", motif: "four-cut", accent: "#f08aa5", second: "#43c9a8" },
-  { id: "film-photo", title: ["FILM PHOTO", "EFFECT"], spec: "GRAIN / VIGNETTE / LIGHT", motif: "film", accent: "#d98c53", second: "#6ca59a" },
+  { id: "home", file: "home.png", title: ["이미지 도구", "용도에 맞게"], spec: "14 TOOLS / BROWSER ONLY", motif: "home", accent: "#36c99b", second: "#ff725e" },
+  { id: "passport-photo", title: ["여권사진", "규격 맞추기"], spec: "413 X 531 PX / JPG", motif: "portrait", accent: "#30c594", second: "#69a8ff" },
+  { id: "id-photo", title: ["증명사진", "크기 맞추기"], spec: "354 X 472 PX", motif: "id", accent: "#6faaf8", second: "#ff8a72" },
+  { id: "resident-id-photo", title: ["주민등록증 사진", "크기 맞추기"], spec: "413 X 531 PX", motif: "resident", accent: "#ff806a", second: "#53caa6" },
+  { id: "youtube-banner", title: ["유튜브 배너", "안전영역 확인"], spec: "2560 X 1440 / SAFE AREA", motif: "banner", accent: "#ff665a", second: "#ffd15c" },
+  { id: "favicon-maker", title: ["파비콘 만들기", "파일 세트 생성"], spec: "ICO / PNG / MANIFEST", motif: "favicon", accent: "#7a82ff", second: "#43d3ae" },
+  { id: "photo-privacy-cleaner", title: ["사진 개인정보", "메타데이터 정리"], spec: "EXIF / GPS / DEVICE DATA", motif: "privacy", accent: "#24b993", second: "#7aa8ff" },
+  { id: "image-compressor", title: ["사진 용량 줄이기", "목표 크기 맞추기"], spec: "TARGET KB / MB", motif: "compressor", accent: "#ff9867", second: "#4bbf9d" },
+  { id: "image-resizer", title: ["이미지 크기 조절", "픽셀과 비율 변경"], spec: "PIXELS / LONG EDGE / PERCENT", motif: "resizer", accent: "#5b9df4", second: "#ffc861" },
+  { id: "image-converter", title: ["이미지 형식 변환", "파일 형식 바꾸기"], spec: "JPEG / PNG / WEBP", motif: "converter", accent: "#8f78f4", second: "#54c9a7" },
+  { id: "social-image-pack", title: ["SNS 이미지 세트", "세 가지 비율"], spec: "1:1 / 4:5 / 9:16", motif: "social", accent: "#ee6f91", second: "#6d99f7" },
+  { id: "instagram-profile-picture", title: ["인스타 프로필", "원형 테두리"], spec: "1080 X 1080 / CIRCLE", motif: "profile", accent: "#ff725e", second: "#8b7cf6" },
+  { id: "youtube-thumbnail", title: ["유튜브 썸네일", "제목 배치 만들기"], spec: "3840 X 2160 / 16:9", motif: "thumbnail", accent: "#ff6259", second: "#4f92ef" },
+  { id: "four-cut-photo", title: ["네컷사진 만들기", "네 칸 배치"], spec: "4 FRAMES / JPG / PNG", motif: "four-cut", accent: "#f08aa5", second: "#43c9a8" },
+  { id: "film-photo", title: ["필름사진 효과", "네 가지 모드"], spec: "GRAIN / VIGNETTE / LIGHT", motif: "film", accent: "#d98c53", second: "#6ca59a" },
 ];
 
 const FONT = {
@@ -142,6 +144,19 @@ class Raster {
     }
   }
 
+  ring(centerX, centerY, radius, width, fill, alpha = 1) {
+    const outerSquared = radius * radius;
+    const innerSquared = Math.max(0, radius - width) ** 2;
+    for (let y = Math.floor(centerY - radius); y <= Math.ceil(centerY + radius); y += 1) {
+      for (let x = Math.floor(centerX - radius); x <= Math.ceil(centerX + radius); x += 1) {
+        const dx = x - centerX;
+        const dy = y - centerY;
+        const distance = dx * dx + dy * dy;
+        if (distance <= outerSquared && distance >= innerSquared) this.pixel(x, y, fill, alpha);
+      }
+    }
+  }
+
   line(x1, y1, x2, y2, width, fill, alpha = 1) {
     const distance = Math.hypot(x2 - x1, y2 - y1);
     const steps = Math.max(1, Math.ceil(distance / Math.max(1, width / 3)));
@@ -180,6 +195,273 @@ function drawText(raster, text, x, y, scale, fill, alpha = 1) {
       }
     }
     cursor += scale * 6;
+  }
+}
+
+const HANGUL_INITIALS = ["ㄱ", "ㄲ", "ㄴ", "ㄷ", "ㄸ", "ㄹ", "ㅁ", "ㅂ", "ㅃ", "ㅅ", "ㅆ", "ㅇ", "ㅈ", "ㅉ", "ㅊ", "ㅋ", "ㅌ", "ㅍ", "ㅎ"];
+const HANGUL_MEDIALS = ["ㅏ", "ㅐ", "ㅑ", "ㅒ", "ㅓ", "ㅔ", "ㅕ", "ㅖ", "ㅗ", "ㅘ", "ㅙ", "ㅚ", "ㅛ", "ㅜ", "ㅝ", "ㅞ", "ㅟ", "ㅠ", "ㅡ", "ㅢ", "ㅣ"];
+const HANGUL_FINALS = ["", "ㄱ", "ㄲ", "ㄳ", "ㄴ", "ㄵ", "ㄶ", "ㄷ", "ㄹ", "ㄺ", "ㄻ", "ㄼ", "ㄽ", "ㄾ", "ㄿ", "ㅀ", "ㅁ", "ㅂ", "ㅄ", "ㅅ", "ㅆ", "ㅇ", "ㅈ", "ㅊ", "ㅋ", "ㅌ", "ㅍ", "ㅎ"];
+const VERTICAL_VOWELS = new Set(["ㅏ", "ㅐ", "ㅑ", "ㅒ", "ㅓ", "ㅔ", "ㅕ", "ㅖ", "ㅣ"]);
+const HORIZONTAL_VOWELS = new Set(["ㅗ", "ㅛ", "ㅜ", "ㅠ", "ㅡ"]);
+const DOUBLE_CONSONANTS = {
+  ㄲ: ["ㄱ", "ㄱ"],
+  ㄸ: ["ㄷ", "ㄷ"],
+  ㅃ: ["ㅂ", "ㅂ"],
+  ㅆ: ["ㅅ", "ㅅ"],
+  ㅉ: ["ㅈ", "ㅈ"],
+};
+const COMPOUND_FINALS = {
+  ㄳ: ["ㄱ", "ㅅ"],
+  ㄵ: ["ㄴ", "ㅈ"],
+  ㄶ: ["ㄴ", "ㅎ"],
+  ㄺ: ["ㄹ", "ㄱ"],
+  ㄻ: ["ㄹ", "ㅁ"],
+  ㄼ: ["ㄹ", "ㅂ"],
+  ㄽ: ["ㄹ", "ㅅ"],
+  ㄾ: ["ㄹ", "ㅌ"],
+  ㄿ: ["ㄹ", "ㅍ"],
+  ㅀ: ["ㄹ", "ㅎ"],
+  ㅄ: ["ㅂ", "ㅅ"],
+};
+const COMPOUND_VOWELS = {
+  ㅘ: ["ㅗ", "ㅏ"],
+  ㅙ: ["ㅗ", "ㅐ"],
+  ㅚ: ["ㅗ", "ㅣ"],
+  ㅝ: ["ㅜ", "ㅓ"],
+  ㅞ: ["ㅜ", "ㅔ"],
+  ㅟ: ["ㅜ", "ㅣ"],
+  ㅢ: ["ㅡ", "ㅣ"],
+};
+
+function drawJamo(raster, jamo, x, y, width, height, fill, alpha = 1) {
+  const double = DOUBLE_CONSONANTS[jamo];
+  const compoundFinal = COMPOUND_FINALS[jamo];
+  if (double || compoundFinal) {
+    const parts = double ?? compoundFinal;
+    drawJamo(raster, parts[0], x, y, width * 0.46, height, fill, alpha);
+    drawJamo(raster, parts[1], x + width * 0.54, y, width * 0.46, height, fill, alpha);
+    return;
+  }
+
+  const compoundVowel = COMPOUND_VOWELS[jamo];
+  if (compoundVowel) {
+    drawJamo(raster, compoundVowel[0], x, y + height * 0.4, width * 0.62, height * 0.58, fill, alpha);
+    drawJamo(raster, compoundVowel[1], x + width * 0.58, y, width * 0.42, height, fill, alpha);
+    return;
+  }
+
+  const stroke = Math.max(5.5, Math.min(width, height) * 0.2);
+  const line = (x1, y1, x2, y2, thickness = stroke) => {
+    raster.line(x + width * x1, y + height * y1, x + width * x2, y + height * y2, thickness, fill, alpha);
+  };
+  const ring = (centerX, centerY, radiusX, radiusY = radiusX) => {
+    const radius = Math.min(width * radiusX, height * radiusY);
+    raster.ring(x + width * centerX, y + height * centerY, radius, stroke, fill, alpha);
+  };
+
+  switch (jamo) {
+    case "ㄱ":
+      line(.16, .18, .82, .18);
+      line(.82, .18, .82, .84);
+      break;
+    case "ㄴ":
+      line(.18, .16, .18, .82);
+      line(.18, .82, .84, .82);
+      break;
+    case "ㄷ":
+      line(.17, .18, .83, .18);
+      line(.17, .18, .17, .82);
+      line(.17, .82, .83, .82);
+      line(.83, .18, .83, .82);
+      break;
+    case "ㄹ":
+      line(.16, .16, .82, .16);
+      line(.82, .16, .82, .43);
+      line(.82, .43, .23, .43);
+      line(.23, .43, .23, .66);
+      line(.23, .66, .84, .66);
+      line(.84, .66, .84, .84);
+      line(.84, .84, .16, .84);
+      break;
+    case "ㅁ":
+      line(.17, .17, .83, .17);
+      line(.17, .17, .17, .83);
+      line(.17, .83, .83, .83);
+      line(.83, .17, .83, .83);
+      break;
+    case "ㅂ":
+      line(.18, .16, .18, .84);
+      line(.82, .16, .82, .84);
+      line(.18, .18, .82, .18);
+      line(.18, .5, .82, .5);
+      line(.18, .82, .82, .82);
+      break;
+    case "ㅅ":
+      line(.5, .14, .16, .84);
+      line(.5, .14, .84, .84);
+      break;
+    case "ㅇ":
+      ring(.5, .5, .36);
+      break;
+    case "ㅈ":
+      line(.16, .15, .84, .15);
+      line(.5, .27, .17, .84);
+      line(.5, .27, .83, .84);
+      break;
+    case "ㅊ":
+      line(.34, .08, .66, .08);
+      line(.16, .28, .84, .28);
+      line(.5, .38, .17, .88);
+      line(.5, .38, .83, .88);
+      break;
+    case "ㅋ":
+      line(.16, .16, .84, .16);
+      line(.84, .16, .84, .84);
+      line(.34, .5, .84, .5);
+      break;
+    case "ㅌ":
+      line(.15, .17, .85, .17);
+      line(.15, .5, .85, .5);
+      line(.15, .83, .85, .83);
+      line(.18, .17, .18, .83);
+      line(.82, .17, .82, .83);
+      break;
+    case "ㅍ":
+      line(.15, .26, .85, .26);
+      line(.15, .74, .85, .74);
+      line(.32, .14, .32, .86);
+      line(.68, .14, .68, .86);
+      break;
+    case "ㅎ":
+      line(.32, .1, .68, .1);
+      line(.18, .3, .82, .3);
+      ring(.5, .66, .25, .23);
+      break;
+    case "ㅏ":
+      line(.42, .08, .42, .92);
+      line(.42, .45, .9, .45);
+      break;
+    case "ㅐ":
+      line(.25, .08, .25, .92);
+      line(.25, .45, .62, .45);
+      line(.78, .08, .78, .92);
+      break;
+    case "ㅑ":
+      line(.4, .08, .4, .92);
+      line(.4, .35, .9, .35);
+      line(.4, .62, .9, .62);
+      break;
+    case "ㅒ":
+      line(.22, .08, .22, .92);
+      line(.22, .34, .58, .34);
+      line(.22, .63, .58, .63);
+      line(.78, .08, .78, .92);
+      break;
+    case "ㅓ":
+      line(.58, .08, .58, .92);
+      line(.1, .45, .58, .45);
+      break;
+    case "ㅔ":
+      line(.22, .08, .22, .92);
+      line(.22, .45, .6, .45);
+      line(.78, .08, .78, .92);
+      break;
+    case "ㅕ":
+      line(.6, .08, .6, .92);
+      line(.1, .35, .6, .35);
+      line(.1, .62, .6, .62);
+      break;
+    case "ㅖ":
+      line(.22, .08, .22, .92);
+      line(.22, .34, .58, .34);
+      line(.22, .63, .58, .63);
+      line(.78, .08, .78, .92);
+      break;
+    case "ㅗ":
+      line(.08, .68, .92, .68);
+      line(.5, .1, .5, .68);
+      break;
+    case "ㅛ":
+      line(.08, .72, .92, .72);
+      line(.34, .12, .34, .72);
+      line(.66, .12, .66, .72);
+      break;
+    case "ㅜ":
+      line(.08, .32, .92, .32);
+      line(.5, .32, .5, .9);
+      break;
+    case "ㅠ":
+      line(.08, .28, .92, .28);
+      line(.34, .28, .34, .88);
+      line(.66, .28, .66, .88);
+      break;
+    case "ㅡ":
+      line(.08, .5, .92, .5);
+      break;
+    case "ㅣ":
+      line(.5, .08, .5, .92);
+      break;
+    default:
+      raster.roundedRect(x + width * .18, y + height * .18, width * .64, height * .64, stroke, fill, alpha * .28);
+  }
+}
+
+function drawHangulSyllable(raster, character, x, y, size, fill, alpha = 1) {
+  const value = character.codePointAt(0) - 0xac00;
+  const initial = HANGUL_INITIALS[Math.floor(value / 588)];
+  const medial = HANGUL_MEDIALS[Math.floor((value % 588) / 28)];
+  const final = HANGUL_FINALS[value % 28];
+  const margin = size * .06;
+  const cellX = x + margin;
+  const cellY = y + margin;
+  const cellWidth = size - margin * 2;
+  const cellHeight = size - margin * 2;
+  const mainHeight = final ? cellHeight * .72 : cellHeight;
+
+  if (VERTICAL_VOWELS.has(medial)) {
+    drawJamo(raster, initial, cellX, cellY, cellWidth * .5, mainHeight, fill, alpha);
+    drawJamo(raster, medial, cellX + cellWidth * .52, cellY, cellWidth * .46, mainHeight, fill, alpha);
+  } else if (HORIZONTAL_VOWELS.has(medial)) {
+    drawJamo(raster, initial, cellX + cellWidth * .16, cellY, cellWidth * .68, mainHeight * .52, fill, alpha);
+    drawJamo(raster, medial, cellX, cellY + mainHeight * .53, cellWidth, mainHeight * .46, fill, alpha);
+  } else {
+    drawJamo(raster, initial, cellX, cellY, cellWidth * .47, mainHeight * .58, fill, alpha);
+    drawJamo(raster, medial, cellX + cellWidth * .45, cellY, cellWidth * .54, mainHeight, fill, alpha);
+  }
+
+  if (final) {
+    drawJamo(raster, final, cellX + cellWidth * .22, cellY + cellHeight * .76, cellWidth * .56, cellHeight * .22, fill, alpha);
+  }
+}
+
+function hangulTextUnits(text) {
+  return [...text].reduce((units, character) => {
+    if (character === " ") return units + .44;
+    if (FONT[character.toUpperCase()]) return units + .75;
+    return units + 1;
+  }, 0);
+}
+
+function drawHangulText(raster, text, centerX, y, maxWidth, maximumSize, fill, alpha = 1) {
+  const units = hangulTextUnits(text);
+  const size = Math.min(maximumSize, maxWidth / units);
+  let cursor = centerX - (units * size) / 2;
+  for (const character of text) {
+    if (character === " ") {
+      cursor += size * .44;
+      continue;
+    }
+    const codePoint = character.codePointAt(0);
+    if (codePoint >= 0xac00 && codePoint <= 0xd7a3) {
+      drawHangulSyllable(raster, character, cursor, y, size, fill, alpha);
+      cursor += size;
+    } else if (FONT[character.toUpperCase()]) {
+      drawText(raster, character, cursor, y + size * .06, size / 8, fill, alpha);
+      cursor += size * .75;
+    } else {
+      raster.roundedRect(cursor + size * .18, y + size * .18, size * .64, size * .64, size * .08, fill, alpha * .3);
+      cursor += size;
+    }
   }
 }
 
@@ -346,6 +628,17 @@ function drawMotif(raster, motif, accent, second, seed) {
       drawPerson(raster, 812, 416, 76, accent);
       break;
     }
+    case "profile": {
+      raster.circle(936, 306, 220, NAVY, 0.1);
+      raster.circle(926, 296, 220, WHITE);
+      raster.circle(926, 296, 184, accent);
+      raster.circle(926, 296, 144, panel);
+      drawPerson(raster, 926, 194, 216, second);
+      raster.circle(926, 296, 214, second, 0.08);
+      raster.ring(926, 296, 218, 5, NAVY, 0.32);
+      drawText(raster, "1080 X 1080", 838, 548, 3, NAVY, 0.72);
+      break;
+    }
     case "thumbnail": {
       drawOutlineCard(raster, 710, 154, 440, 248, 30, accent, NAVY);
       raster.circle(1037, 232, 54, second, 0.9);
@@ -382,7 +675,7 @@ function drawMotif(raster, motif, accent, second, seed) {
       for (let index = 0; index < 210; index += 1) {
         raster.circle(752 + random() * 368, 176 + random() * 208, 1 + random() * 2, WHITE, 0.22);
       }
-      drawText(raster, "24 07 23", 838, 468, 4, accent);
+      drawText(raster, "SAMPLE", 870, 468, 4, accent);
       break;
     }
     default:
@@ -404,8 +697,8 @@ function renderCard(card) {
   drawText(raster, "LOCAL IMAGE TOOL", 128, 88, 2, MUTED);
 
   card.title.forEach((line, index) => {
-    drawText(raster, line, 61, 190 + index * 78 + 4, 8, NAVY, 0.12);
-    drawText(raster, line, 57, 186 + index * 78, 8, NAVY);
+    drawHangulText(raster, line, 332, 178 + index * 88 + 4, 548, 70, NAVY, 0.12);
+    drawHangulText(raster, line, 328, 174 + index * 88, 548, 70, NAVY);
   });
 
   raster.roundedRect(58, 403, 282, 42, 21, accent, 0.2);
@@ -466,12 +759,36 @@ function encodePng(raster) {
 
 const projectRoot = process.cwd();
 const toolDirectory = path.join(projectRoot, "public", "og", "tools");
-await mkdir(toolDirectory, { recursive: true });
+const checkOnly = process.argv.includes("--check");
+if (cards.length !== 15 || new Set(cards.map((card) => card.id)).size !== cards.length) {
+  throw new Error(`OG 카드 목록이 중복됐거나 누락됐습니다. expected=15 actual=${cards.length}`);
+}
+if (!checkOnly) await mkdir(toolDirectory, { recursive: true });
 
+const renderedCards = [];
 for (const card of cards) {
   const outputPath = card.id === "home"
     ? path.join(projectRoot, "public", "og", "home.png")
     : path.join(toolDirectory, card.file ?? `${card.id}.png`);
-  await writeFile(outputPath, renderCard(card));
-  process.stdout.write(`${path.relative(projectRoot, outputPath)}\n`);
+  const rendered = renderCard(card);
+  renderedCards.push({ card, outputPath, rendered });
+  if (checkOnly) {
+    let current;
+    try {
+      current = await readFile(outputPath);
+    } catch {
+      throw new Error(`OG 산출물이 없습니다: ${path.relative(projectRoot, outputPath)}`);
+    }
+    if (!current.equals(rendered)) {
+      throw new Error(`OG 산출물이 현재 한국어 생성기와 다릅니다: ${path.relative(projectRoot, outputPath)}`);
+    }
+  } else {
+    await writeFile(outputPath, rendered);
+  }
 }
+
+const digest = createHash("sha256")
+  .update(Buffer.concat(renderedCards.map(({ rendered }) => rendered)))
+  .digest("hex")
+  .slice(0, 16);
+process.stdout.write(`[og] ${checkOnly ? "check" : "generate"} PASS — ${renderedCards.length} PNG, 1200x630, sha256:${digest}\n`);

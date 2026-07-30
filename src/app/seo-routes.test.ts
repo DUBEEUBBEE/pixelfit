@@ -5,7 +5,7 @@ import robots from "./robots";
 import sitemap from "./sitemap";
 
 describe("static SEO routes", () => {
-  it("홈·신뢰 페이지·13개 도구·8개 가이드를 url과 수정일만으로 싣는다", () => {
+  it("홈·신뢰 페이지·14개 도구·8개 가이드를 url과 수정일만으로 싣는다", () => {
     const entries = sitemap();
     expect(entries).toHaveLength(6 + tools.length + guides.length);
     expect(new Set(entries.map((entry) => entry.url)).size).toBe(entries.length);
@@ -16,6 +16,17 @@ describe("static SEO routes", () => {
       expect(new URL(entry.url).hash).toBe("");
     }
     expect(entries.some((entry) => entry.url.includes("404"))).toBe(false);
+    expect(entries.slice(0, 6).map((entry) => ({
+      path: new URL(entry.url).pathname,
+      lastModified: entry.lastModified,
+    }))).toEqual([
+      { path: "/", lastModified: "2026-07-26" },
+      { path: "/about/", lastModified: "2026-07-26" },
+      { path: "/contact/", lastModified: "2026-07-26" },
+      { path: "/privacy/", lastModified: "2026-07-26" },
+      { path: "/terms/", lastModified: "2026-07-26" },
+      { path: "/guide/", lastModified: "2026-07-26" },
+    ]);
   });
 
   it("robots에 절대 sitemap을 쓰고 project path를 잃는 Host를 만들지 않는다", () => {

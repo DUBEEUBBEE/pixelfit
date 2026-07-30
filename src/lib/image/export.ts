@@ -3,6 +3,7 @@ import { compressToTarget } from "./compression";
 import { decodeImage } from "./decode";
 import { setJpegDpi, setPngDpi } from "./dpi";
 import { drawImageComposition, replaceEdgeBackground } from "./draw";
+import { verifyEncodedBlob } from "./encode";
 import type { CropTransform } from "./geometry";
 import { resolveBackgroundColor } from "./policy";
 
@@ -35,7 +36,7 @@ export async function exportPresetImage(
   if (canUseWorker()) {
     try {
       const blob = await exportInWorker(file, preset, options, signal, onProgress);
-      return finishResult(blob, preset, options.format, true);
+      return finishVerifiedResult(blob, preset, options.format, true);
     } catch (error) {
       if (isAbortError(error)) throw error;
       // Worker support varies; the same private in-memory pipeline continues on the main thread.
@@ -65,7 +66,10 @@ export async function exportPresetImage(
     onProgress?.(65);
     throwIfAborted(signal);
     const encoded = await encodeCanvas(canvas, options.format, preset.output.maxBytes, preset.output.dpi, onProgress);
-    return { ...finishResult(encoded.blob, preset, options.format, encoded.reachedTarget), quality: encoded.quality };
+    return {
+      ...await finishVerifiedResult(encoded.blob, preset, options.format, encoded.reachedTarget),
+      quality: encoded.quality,
+    };
   } finally {
     decoded.close();
   }
@@ -168,6 +172,21 @@ async function withDpiIfNeeded(blob: Blob, format: ExportFormat, dpi?: number): 
 
 function finishResult(blob: Blob, preset: ImagePreset, format: ExportFormat, reachedTarget: boolean): ExportResult {
   return { blob, width: preset.output.width!, height: preset.output.height!, format, reachedTarget: reachedTarget && (!preset.output.maxBytes || blob.size <= preset.output.maxBytes) };
+}
+
+async function finishVerifiedResult(
+  blob: Blob,
+  preset: ImagePreset,
+  format: ExportFormat,
+  reachedTarget: boolean,
+): Promise<ExportResult> {
+  const verified = await verifyEncodedBlob(blob, {
+    format,
+    width: preset.output.width!,
+    height: preset.output.height!,
+    maxPixels: preset.input.maxPixels,
+  });
+  return finishResult(verified.blob, preset, format, reachedTarget);
 }
 
 function throwIfAborted(signal?: AbortSignal): void {

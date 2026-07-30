@@ -6,15 +6,33 @@ import { decodeImage, type DecodedImage } from "@/lib/image/decode";
 import type { ImageOutputFormat } from "@/lib/image/encode";
 import { createBoundedPreviewBlob } from "@/lib/image/preview";
 
-export type UtilityImageAsset = {
+type UtilityImageAssetBase = {
   file: File;
-  bytes: Uint8Array;
   format: ImageOutputFormat;
   decoded: DecodedImage;
   previewUrl: string;
 };
 
-export function useUtilityImage() {
+export type UtilityImageAsset<RetainBytes extends boolean = boolean> = UtilityImageAssetBase & (
+  RetainBytes extends true ? { bytes: Uint8Array } : { bytes?: never }
+);
+
+type UtilityImageController<RetainBytes extends boolean> = {
+  asset: UtilityImageAsset<RetainBytes> | null;
+  busy: boolean;
+  error: string | null;
+  setError: (message: string | null) => void;
+  choose: (file: File) => Promise<UtilityImageAsset<RetainBytes> | null>;
+  reset: () => void;
+};
+
+export function useUtilityImage(): UtilityImageController<true>;
+export function useUtilityImage(options: { retainBytes: true }): UtilityImageController<true>;
+export function useUtilityImage(options: { retainBytes: false }): UtilityImageController<false>;
+export function useUtilityImage(
+  options: { retainBytes?: boolean } = {},
+): UtilityImageController<boolean> {
+  const retainBytes = options.retainBytes !== false;
   const [asset, setAsset] = useState<UtilityImageAsset | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -57,13 +75,13 @@ export function useUtilityImage() {
         return null;
       }
       previewUrl = URL.createObjectURL(previewBlob);
-      const next: UtilityImageAsset = {
+      const common: UtilityImageAssetBase = {
         file,
-        bytes: validated.bytes,
         format: validated.type,
         decoded,
         previewUrl,
       };
+      const next: UtilityImageAsset = retainBytes ? { ...common, bytes: validated.bytes } : common;
       dispose(assetRef.current);
       assetRef.current = next;
       setAsset(next);
@@ -80,7 +98,7 @@ export function useUtilityImage() {
     } finally {
       if (task === taskRef.current) setBusy(false);
     }
-  }, [dispose]);
+  }, [dispose, retainBytes]);
 
   return { asset, busy, error, setError, choose, reset };
 }

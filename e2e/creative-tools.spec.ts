@@ -37,6 +37,24 @@ test("SNS 세트 ZIP은 선택한 세 비율의 실제 JPEG를 포함한다", as
   }
 });
 
+test("인스타그램 프로필 도구는 작은 원과 색 테두리를 1080×1080 PNG로 만든다", async ({ page }) => {
+  test.setTimeout(90_000);
+  await page.goto("/instagram-profile-picture");
+  await page.waitForLoadState("networkidle");
+  await page.getByLabel("사진 또는 파일 선택").setInputFiles({ name: "instagram-profile.png", mimeType: "image/png", buffer: makePng(900, 1200) });
+  await expect(page.getByRole("heading", { name: "작은 원과 사진 크기" })).toBeVisible();
+  await expect(page.getByAltText("인스타그램 프로필 사진 원형 배치 예상")).toBeVisible();
+  await page.getByRole("button", { name: "라벤더" }).click();
+  await page.getByLabel("사진 원 크기").press("ArrowLeft");
+  await page.getByLabel("원 안 사진 크기").press("ArrowLeft");
+  await page.getByLabel("테두리 두께").press("ArrowRight");
+  await page.getByRole("button", { name: "인스타 프로필 사진 만들기" }).click();
+  await expect(page.getByRole("heading", { name: "작은 원과 색 테두리를 적용했습니다." })).toBeVisible({ timeout: 60_000 });
+  const bytes = await downloadedBytes(page, page.getByRole("button", { name: "결과 다운로드" }), "pixelfit-instagram-profile-1080x1080.png");
+  expect(readImageFormat(bytes)).toBe("png");
+  expect(readImageDimensions(bytes)).toEqual({ width: 1080, height: 1080 });
+});
+
 test("유튜브 썸네일은 텍스트 설정을 반영해 3840×2160 JPEG를 만든다", async ({ page }) => {
   test.setTimeout(90_000);
   await page.goto("/youtube-thumbnail");
@@ -75,10 +93,10 @@ test("필름 효과는 생성형 경로 없이 원본 픽셀 크기의 실제 JP
   await page.goto("/film-photo");
   await page.waitForLoadState("networkidle");
   await page.getByLabel("사진 또는 파일 선택").setInputFiles({ name: "film.png", mimeType: "image/png", buffer: makePng(640, 800) });
-  await expect(page.getByText(/생성형 AI를 사용하지 않는 결정적 픽셀 필터/)).toBeVisible();
+  await expect(page.getByText(/생성형 AI를 사용하지 않고 사진의 색과 밝기를 기기 안에서 바꿉니다/)).toBeVisible();
   await page.getByRole("button", { name: /흑백 필름/ }).click();
   await page.getByRole("button", { name: "필름사진 만들기" }).click();
-  await expect(page.getByRole("heading", { name: "결정적 필름 효과를 적용했습니다." })).toBeVisible({ timeout: 60_000 });
+  await expect(page.getByRole("heading", { name: "필름 효과를 적용했습니다." })).toBeVisible({ timeout: 60_000 });
   const bytes = await downloadedBytes(page, page.getByRole("button", { name: "결과 다운로드" }), "film-photo-mono.jpg");
   expect(readImageFormat(bytes)).toBe("jpeg");
   expect(readImageDimensions(bytes)).toEqual({ width: 640, height: 800 });

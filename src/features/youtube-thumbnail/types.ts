@@ -5,6 +5,8 @@ export type ThumbnailTemplateId = "editorial-left" | "editorial-right" | "center
 export type ThumbnailTextAlign = "left" | "center" | "right";
 
 export type YoutubeThumbnailOptions = {
+  /** Original local file used only for the worker path; never uploaded or persisted. */
+  sourceFile?: Blob;
   template: ThumbnailTemplateId;
   title: string;
   subtitle: string;

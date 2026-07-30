@@ -2,11 +2,11 @@ import { env } from "./env";
 
 export const basePath = env.basePath;
 
-const contactHref = env.contactEmail ? `mailto:${env.contactEmail}` : env.contactUrl;
-const contactLabel = env.contactEmail ?? "GitHub Issues 문의";
+const contactHref = `mailto:${env.contactEmail}`;
 
 export const brand = {
   name: "픽셀핏",
+  alternateName: "PixelFit",
   legalName: "픽셀핏",
   operatorName: env.operatorName,
   description: "사진을 올리면 용도에 맞는 픽셀, 비율, 여백과 파일 형식을 기기 안에서 맞춰주는 이미지 도구",
@@ -14,7 +14,7 @@ export const brand = {
   contactEmail: env.contactEmail,
   contactUrl: env.contactUrl,
   contactHref,
-  contactLabel,
+  contactLabel: env.contactEmail,
   locale: "ko_KR",
 } as const;
 

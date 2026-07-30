@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
+import { execFileSync } from "node:child_process";
 import { describe, expect, it } from "vitest";
 import { tools } from "./tools";
 
@@ -8,8 +9,8 @@ const ogImages = ["/og/home.png", ...tools.map((tool) => tool.seo.ogImage)];
 
 describe("static Open Graph assets", () => {
   it("covers home and every tool with a unique file", () => {
-    expect(tools).toHaveLength(13);
-    expect(ogImages).toHaveLength(14);
+    expect(tools).toHaveLength(14);
+    expect(ogImages).toHaveLength(15);
     expect(new Set(ogImages).size).toBe(ogImages.length);
   });
 
@@ -23,5 +24,13 @@ describe("static Open Graph assets", () => {
     expect(contents.subarray(12, 16).toString("ascii")).toBe("IHDR");
     expect(contents.readUInt32BE(16)).toBe(1200);
     expect(contents.readUInt32BE(20)).toBe(630);
+  });
+
+  it("matches every home and tool PNG to the current Korean title generator", () => {
+    expect(() => execFileSync(
+      process.execPath,
+      ["scripts/generate-og.mjs", "--check"],
+      { cwd: process.cwd(), encoding: "utf8", stdio: "pipe" },
+    )).not.toThrow();
   });
 });

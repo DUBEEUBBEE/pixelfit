@@ -61,7 +61,7 @@ export default function GuidePage() {
               <h3>{guide.title}</h3>
               <p>{guide.summary}</p>
               <div className="card-spec">출처 확인 <time dateTime={guide.source.lastVerifiedAt}>{guide.source.lastVerifiedAt}</time></div>
-              <Link className="card-link" href={`/guide/${guide.slug}`} aria-label={`${guide.title} 읽기`}>가이드 읽기 <ArrowRight size={17} aria-hidden="true" /></Link>
+              <Link className="card-link" href={`/guide/${guide.slug}`} prefetch={false} aria-label={`${guide.title} 읽기`}>가이드 읽기 <ArrowRight size={17} aria-hidden="true" /></Link>
             </article>
           ))}
         </div>

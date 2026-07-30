@@ -1,8 +1,9 @@
 import { z } from "zod";
 
-export const DEFAULT_SITE_URL = "https://dubeeubbee.github.io/pixelfit";
+export const DEFAULT_SITE_URL = "https://pixelfit.me";
+export const DEFAULT_CONTACT_EMAIL = "wodnd0823@gmail.com";
 export const DEFAULT_CONTACT_URL = "https://github.com/DUBEEUBBEE/pixelfit/issues";
-export const DEFAULT_OPERATOR_NAME = "픽셀핏 운영자";
+export const DEFAULT_OPERATOR_NAME = "DUBEEUBBEE";
 
 const environmentKeys = [
   "NEXT_PUBLIC_SITE_URL",
@@ -72,7 +73,7 @@ export type EnvironmentConfig = {
   siteUrl: string;
   basePath: string;
   customDomain?: string;
-  contactEmail?: string;
+  contactEmail: string;
   contactUrl: string;
   operatorName: string;
   adsense: {
@@ -182,7 +183,8 @@ export function parseEnvironment(source: EnvironmentSource): EnvironmentConfig {
   const contactEmailSetting = preferPublicValue(raw, "NEXT_PUBLIC_CONTACT_EMAIL", "CONTACT_EMAIL", warnings);
   const contactUrlSetting = preferPublicValue(raw, "NEXT_PUBLIC_CONTACT_URL", "CONTACT_URL", warnings);
   const operatorNameSetting = preferPublicValue(raw, "NEXT_PUBLIC_OPERATOR_NAME", "OPERATOR_NAME", warnings);
-  const contactEmail = optionalValidatedValue(contactEmailSetting.key, contactEmailSetting.value, emailSchema, warnings);
+  const contactEmail = optionalValidatedValue(contactEmailSetting.key, contactEmailSetting.value, emailSchema, warnings)
+    ?? DEFAULT_CONTACT_EMAIL;
   const contactUrl = optionalValidatedValue(contactUrlSetting.key, contactUrlSetting.value, httpUrlSchema, warnings);
   const operatorName = optionalValidatedValue(operatorNameSetting.key, operatorNameSetting.value, operatorNameSchema, warnings)
     ?? DEFAULT_OPERATOR_NAME;

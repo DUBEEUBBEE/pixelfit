@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowRight, ChevronRight, ExternalLink } from "lucide-react";
 import { brand, publicUrl } from "@/config/brand";
 import { getGuide, type GuideDefinition } from "@/config/guides";
+import { buildOrganizationStructuredData } from "@/config/organization";
 import { AdSlot } from "@/components/ads";
 
 function jsonLd(value: unknown): string {
@@ -11,7 +12,7 @@ function jsonLd(value: unknown): string {
 function guideStructuredData(guide: GuideDefinition) {
   const canonical = publicUrl(`/guide/${guide.slug}`);
   const author = {
-    "@type": "Organization",
+    "@type": "Person",
     name: brand.operatorName,
     url: publicUrl("/about"),
   };
@@ -41,7 +42,7 @@ function guideStructuredData(guide: GuideDefinition) {
       datePublished: guide.seo.contentPublishedAt,
       dateModified: guide.seo.contentUpdatedAt,
       author,
-      publisher: author,
+      publisher: buildOrganizationStructuredData(),
       inLanguage: "ko-KR",
       proficiencyLevel: "Beginner",
       keywords: guide.keywords.join(", "),
@@ -60,9 +61,9 @@ export function GuideArticle({ guide }: { guide: GuideDefinition }) {
   return (
     <div className="page-content site-shell">
       <nav className="breadcrumbs" aria-label="현재 위치">
-        <Link href="/">홈</Link>
+        <Link href="/" prefetch={false}>홈</Link>
         <ChevronRight size={14} aria-hidden="true" />
-        <Link href="/guide">가이드</Link>
+        <Link href="/guide" prefetch={false}>가이드</Link>
         <ChevronRight size={14} aria-hidden="true" />
         <span aria-current="page">{guide.title}</span>
       </nav>
@@ -140,7 +141,7 @@ export function GuideArticle({ guide }: { guide: GuideDefinition }) {
                   <span className="badge">관련 도구</span>
                   <h3>{cta.label}</h3>
                   <p>{cta.description}</p>
-                  <Link className="card-link" href={cta.href}>도구 열기 <ArrowRight size={17} aria-hidden="true" /></Link>
+                  <Link className="card-link" href={cta.href} prefetch={false}>도구 열기 <ArrowRight size={17} aria-hidden="true" /></Link>
                 </article>
               ))}
             </div>
@@ -163,11 +164,11 @@ export function GuideArticle({ guide }: { guide: GuideDefinition }) {
           <ul style={{ margin: ".75rem 0 0", paddingLeft: "1.1rem" }}>
             {relatedGuides.map((related) => (
               <li key={related.slug} style={{ marginTop: ".65rem" }}>
-                <Link href={`/guide/${related.slug}`}>{related.title}</Link>
+                <Link href={`/guide/${related.slug}`} prefetch={false}>{related.title}</Link>
               </li>
             ))}
           </ul>
-          <Link className="card-link" href="/guide" style={{ marginTop: "1rem" }}>가이드 전체 보기 <ArrowRight size={15} aria-hidden="true" /></Link>
+          <Link className="card-link" href="/guide" prefetch={false} style={{ marginTop: "1rem" }}>가이드 전체 보기 <ArrowRight size={15} aria-hidden="true" /></Link>
         </aside>
       </div>
 

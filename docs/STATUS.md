@@ -1,8 +1,128 @@
 # 픽셀핏 상태
 
-스냅샷: 2026-07-26 KST
+스냅샷: 2026-07-30 KST
 
 이 문서는 공개 v1, 로컬 v2 RC, 공개 v2를 분리하고 실행한 검사만 `PASS`로 기록한다. 실기기 Safari처럼 실행하지 않은 항목은 `NOT_TESTED`로 남긴다.
+
+## 인스타그램 프로필 사진 후보 — 2026-07-30, `WORKTREE_ONLY`
+
+공개 v2와 아래 P7 기록 위에 14번째 도구 `/instagram-profile-picture`를 추가했다. 1080×1080은 Instagram의 공식 의무 픽셀값이 아니라 픽셀핏 서비스 출력값이다. 사진을 정사각형으로 cover-crop하지 않고 작은 원 안에 contain 배치하며, 원 크기·사진 크기와 위치·테두리 두께·테두리/원 안/바깥 캔버스 색을 조절할 수 있다. 결과는 PNG 또는 JPEG로 만들고 형식과 1080×1080 크기를 다시 확인한다.
+
+| 검사 | 현재 후보 결과 |
+| --- | --- |
+| 규격·출처 조사 | `PASS` — 공식 Meta 도움말에서 Instagram 전용 의무 업로드 픽셀값을 확인하지 못해 1080×1080을 `convention` 서비스값으로 표시 |
+| 구현 | `PASS` — Registry, editor/preview, 공통 layout, Canvas renderer, PNG/JPEG 결과 검증, 결정적 파일명, 전용 OG와 SEO 콘텐츠 추가 |
+| `pnpm lint` | `PASS` — warning 0 |
+| `pnpm typecheck` | `PASS` — TypeScript strict, 종료 코드 0 |
+| 단위·컴포넌트 테스트 | `PASS` — 50 files, 210/210 |
+| `pnpm verify:assets` | `PASS` — sample 22개·압축 썸네일 4개와 OG 15개 생성분의 byte-for-byte 결정성 확인; 가이드 OG를 포함한 전체 정적 OG는 24개 |
+| `pnpm check` | `PASS` — lint·typecheck·210/210, 32 static pages, Pages verifier 637 checks, custom verifier 638 checks, sitemap 28 URLs, OG 24 files |
+| `pnpm test:e2e` | `PASS` — 52 cases 중 desktop/mobile 50 passed, 중복 viewport 순회를 생략하는 의도된 mobile cases 2 skipped |
+| 인스타그램 도구 Playwright | `PASS` — Chromium·iPhone 13 WebKit 각각 파일 선택→라벤더 테마·키보드 slider 조정→1080×1080 PNG 생성·다운로드 검증, 2/2 |
+| 접근성 | `PASS` — desktop/mobile의 홈·14개 도구 초기 상태와 기존 대표 편집·결과 상태, axe serious/critical 0, 4/4. 인스타그램 도구의 결과 화면은 전용 키보드 E2E와 수동 QA로 별도 확인 |
+| 수동 desktop/mobile 브라우저 QA | `PASS` — 1440×1000과 390×844에서 편집·결과 화면을 직접 확인. `output/playwright/instagram-profile/` PNG 3개, console error 0·warning 0 |
+| commit·push·배포·공개 URL | `NOT_TESTED` — 요청 범위에서 외부 배포를 실행하지 않음 |
+
+알려진 build 경고는 기존 Worker chunk 간 circular-dependency 경고 두 건이며 정적 export와 위 브라우저 검증은 통과했다. 실기기 Instagram 앱 업로드, 앱 자체 리샘플링·원형 마스크와 실기기 Safari는 실행하지 않았으므로 `NOT_TESTED`다.
+
+## P7 사용자 신뢰·탐색·콘텐츠 후보 — 2026-07-26, `WORKTREE_ONLY`
+
+P7 작업 시작일은 2026-07-26이며 정확한 시작 시각은 기록하지 않았다. 이 절은 아래 P6 후보를 기준선으로 삼은 현재 로컬 작업 트리만 설명한다. 공개 이메일 `wodnd0823@gmail.com`과 운영자 표시명 `DUBEEUBBEE`를 환경 기본값과 공통 Organization 데이터에 반영하고, 소개·문의·개인정보·약관·Footer·가이드 작성자/발행자 정보를 실제 운영 주체에 맞췄다. 일반 문의, 기능 오류, 규격 오류, 개인정보 문의를 구분했으며 이메일이나 공개 GitHub Issue에 얼굴·신분증 원본을 첨부하지 않도록 경고한다.
+
+### P7 변경 전 P6 기준선
+
+| 기준선 | 확인된 결과 |
+| --- | --- |
+| P6 로컬 후보 | `PASS` — Vitest 42 files·144/144, Pages/custom verifier 524/525 checks, E2E 45 passed·1 intended skip, axe 4/4 |
+| 공개·외부 상태 | P7 시작 전부터 `pixelfit.me` DNS·TLS·Search Console·sitemap·AdSense `ads.txt` 확인과 검토 요청은 완료됐고, AdSense는 `준비 중`, CMP·광고 제공은 OFF |
+
+- 사진 용량 줄이기·YouTube 썸네일·네컷사진·필름사진·여권사진에 외부 사진이 아닌 자체 제작 본 예시 22개를 추가했다. 본 예시는 full PNG 4개와 SVG 18개이며 압축 갤러리 전용 480×320 PNG 썸네일 4개를 별도로 생성한다. 압축 full PNG의 actual bytes는 `1,045,528` / `279,843` / `110,060` / `34,154`이고 100KB fixture만 900×600이다. 이 파일은 같은 사용자 원본의 실제 압축 결과가 아니라 색 단계와 세부 묘사를 달리 만든 결정적 비교 fixture이며 UI도 그렇게 설명한다.
+- sample gallery가 viewport에 들어오기 전 네트워크 요청은 0개다. 진입 뒤에는 현재 route의 자산만 요청하며, 압축 route는 480×320 썸네일만 먼저 받고 큰 full PNG는 `원본 크기로 보기` 클릭 뒤에만 요청한다.
+- 홈의 정확한 제목은 `용도를 고르고` / `사진만 올리세요.` 두 줄이다. 자주 쓰는 도구 4개, 새 검색어와 빠른 칩, 카테고리 선택 목록, 검색 결과 0개 대체 링크와 닫힌 전체 13개 목록을 제공한다. 전체 도구는 실제 링크로 서버 HTML에 남고 JavaScript가 꺼져도 기본 `details`를 펼쳐 이동할 수 있다.
+- 모바일 헤더는 `픽셀핏 | 도구 | 가이드 | 메뉴`로 줄이고, 메뉴 안에 소개·문의·개인정보·이용약관·GitHub를 배치했다. `aria-expanded`·`aria-controls`, Escape·바깥 클릭·링크 선택 닫기와 320px 가로 overflow 방지를 확인했다. 데스크톱의 기존 네 링크는 유지한다.
+- 도구 배지는 공식 규격·공식 권장값·일반 사진 크기·일반 이미지 도구·서비스 권장 크기·웹·개인정보·창작 효과로 세분화했다. 도구와 가이드는 게시일을 보존하면서 실제 문구를 수정한 페이지의 수정일을 독립적으로 `2026-07-26`으로 기록했고, 가이드의 Blob·payload·parse·magic bytes·container·signature 같은 구현 표현을 사진·파일·형식·용량 중심 문장으로 바꿨다.
+- 23개 OG 이미지는 한국어 제목 중심의 1200×630 PNG로 다시 만들었다. `NextToolActions`는 같은 사진을 사용자가 누를 때만 현재 탭 메모리로 한 번 전달하고, 네컷·필름 결과는 브라우저가 파일 공유를 지원할 때만 Web Share 버튼을 표시한다. 공유 취소는 오류로 만들지 않고 실패 시 다운로드를 안내한다.
+- 초기 브라우저 기준선에서는 정적 preview가 Next Link의 RSC prefetch 요청을 정상 RSC 응답으로 제공하지 못해 console/page-error 가드가 실패했다. 정적 export 내부 링크에 `prefetch={false}`를 적용해 불필요한 RSC 사전 요청을 제거한 뒤 최종 가드에서 예상 밖 console error·warning과 pageerror가 모두 0임을 확인했다.
+
+| 검사 | P7 현재 후보 결과 |
+| --- | --- |
+| `pnpm install --frozen-lockfile` | `PASS` — pnpm 11.9.0, lockfile 변경 없음 |
+| `pnpm generate:assets` | `PASS` — 본 sample 22개, 압축 PNG thumbnail 4개와 OG 23개 생성 |
+| `pnpm verify:assets` | `PASS` — sample/thumbnail/OG 결정성·선언·물리 파일 집합 확인 |
+| `pnpm lint` | `PASS` — warning 0 |
+| `pnpm typecheck` | `PASS` — TypeScript strict, 종료 코드 0 |
+| `pnpm test` | `PASS` — 49 files, 206/206 |
+| `pnpm build:custom` (`pnpm build` alias) | `PASS` — 최신 `pixelfit.me` root 후보 verifier 618 checks, sitemap 27 URLs, OG 23 files |
+| `pnpm build:pages` | `PASS` — 최종 `pnpm check`에서 verifier 617 checks, sitemap 27 URLs, OG 23 files |
+| `pnpm build:custom:test` | `PASS` — test root 후보 verifier 618 checks |
+| `pnpm check` | `PASS` — lint, typecheck, 49 files·206/206, Pages/custom verifier 617/618 checks |
+| `pnpm test:e2e` | `PASS` — 50 cases 중 48 passed, 대표 viewport·JavaScript-off 검사를 중복하지 않는 의도된 mobile-project cases 2 skipped |
+| `pnpm test:a11y` | `PASS` — 4/4, axe serious/critical 0 |
+| 브라우저 QA 가드 | `PASS` — QA helper가 적용된 E2E 흐름에서 예상 밖 console error 0, warning 0, pageerror 0, 외부 HTTP(S) 요청 0, POST/PUT/PATCH/DELETE 0. 기본 fixture 표식과 테스트가 명시 등록한 일부 파일명이 request URL/body 및 모든 console message에 없음을 확인 |
+| 수동 Playwright 화면 | `PASS` — `output/playwright/p7-final/`의 17개 파일을 직접 열어 확인. desktop gallery 5개와 320×568 gallery 5개에서 전체 자체 제작 예시 22개를 확인했고, 정확한 `home-390x844.png`, 390×844 viewport의 `four-cut-390x844.png`, About·Contact·가이드 desktop, 열린 390×844 모바일 메뉴, 실제 압축 결과의 다음 도구 CTA를 추가 확인했다. 추가 상호작용 세션의 console error·warning은 0 |
+| 샘플 자산 | `PASS` — 자체 제작 본 예시 22개(full PNG 4개·SVG 18개)와 압축 전용 480×320 PNG thumbnail 4개, 선언·물리 파일 집합 일치, 고아 파일 0개, 결정적 묶음 SHA-256 앞 16자리 `061e0431696e4a31` |
+| OG 자산 | `PASS` — 한국어 중심 PNG 23개, 결정적 묶음 SHA-256 앞 16자리 `acc03a7c93bf3d5b` |
+| 최종 custom AdSense/account artifact | `PASS` — `CNAME=pixelfit.me`, 실제 publisher와 일치하는 root `ads.txt`, account meta 30 HTML, 광고 OFF의 loader·`adsbygoogle`·slot runtime marker 0 |
+| hosted CI·P7 공개 fingerprint | `NOT_TESTED` — 현재 로컬 후보를 commit·push·deploy하지 않음 |
+| 외부 계정 | `UNCHANGED` — Search Console 소유권·sitemap을 다시 만지지 않았고 AdSense 검토 상태·광고 OFF 설정도 변경하지 않음 |
+| 실기기 Safari | `NOT_TESTED` — 자동 브라우저 검사는 통과했지만 실제 기기 수동 검사는 실행하지 않음 |
+
+### Lighthouse 13.0.1 — P7 production static preview
+
+| 경로 | Mobile Performance | Mobile LCP | Mobile TBT | Desktop Performance | A11y / BP / SEO | CLS |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| `/` | 99 | 2,055ms | 48ms | 100 | 100 / 100 / 100 | 0.000 |
+| `/about/` | 99 | 2,064ms | 53ms | 100 | 100 / 100 / 100 | 0.000 |
+| `/image-compressor/` | 98 | 2,347ms | 38ms | 100 | 100 / 100 / 100 | 0.000 |
+| `/passport-photo/` | 98 | 2,353ms | 42ms | 100 | 100 / 100 / 100 | 0.000 |
+| `/youtube-thumbnail/` | 98 | 2,373ms | 55ms | 100 | 100 / 100 / 100 | 0.000 |
+| `/four-cut-photo/` | 98 | 2,361ms | 54ms | 100 | 100 / 100 / 100 | 0.000 |
+
+데스크톱 여섯 경로는 Performance 100, LCP 475~519ms, TBT 0ms이며 모바일·데스크톱 12개 모두 Accessibility·Best Practices·SEO 100, CLS 0이다. 원본 JSON은 `output/lighthouse/p7-final-*.json` 12개다. 점수는 로컬 실행 환경과 측정 시점에 따라 달라질 수 있다.
+
+### 공개본 읽기 전용 확인 — P7 배포와 분리
+
+기존 공개본에 대해서만 apex HTTPS `200`, HTTP→HTTPS `301`, `www`의 경로를 보존한 HTTPS apex `301`, 임의 경로 `404`를 읽기 전용으로 확인했다. 이는 현재 P7 작업 트리의 공개 검증이 아니며, 로컬 후보는 배포되지 않았다. Search Console 소유권·sitemap 제출과 AdSense 사이트 검토 상태는 확인·변경 절차를 다시 실행하지 않았고 광고 제공은 계속 OFF다.
+
+### 운영자가 직접 확인할 항목
+
+- `pixelfit.me` 도메인 자동 갱신을 ON으로 바꾸고 결제수단을 확인한다. 마지막 확인 상태는 auto-renew OFF다.
+- `wodnd0823@gmail.com` 계정의 2단계 인증이 ON인지 확인한다.
+- AdSense 상태가 `준비됨`이 될 때까지 광고 제공을 켜지 않는다.
+- 승인 뒤에만 CMP와 동의 흐름을 구성하고, 허용된 광고 위치를 데스크톱·모바일에서 다시 검토한다.
+
+## P6 로컬 보강 후보 — 2026-07-26, `WORKTREE_ONLY`
+
+이 절은 공개 `d054e7c` 뒤의 로컬 작업 트리만 설명한다. 입력 파일 헤더와 픽셀 수를 decode 전에 제한하고, 모든 생성 결과를 다시 파싱하며, SNS 세트·YouTube 썸네일에 Worker 경로를 추가했다. 13개 도구 접근성 범위, 같은 사진 메모리 전달, canonical·OG·JSON-LD URL 일치와 근거 없는 구조화 데이터 차단도 함께 강화했다. 커밋·푸시·배포, Search Console·AdSense·DNS 변경은 수행하지 않았다.
+
+| 검사 | 현재 후보 결과 |
+| --- | --- |
+| `pnpm lint` | `PASS` — warning 0 |
+| `pnpm typecheck` | `PASS` — TypeScript strict, 보존 중인 사용자 `* 2.*` 파일을 포함해 종료 코드 0 |
+| `pnpm test` | `PASS` — 42 files, 144/144 |
+| `pnpm build:pages` | `PASS` — 31 static pages, verifier 524 checks, sitemap 27 URLs, OG 23 files |
+| `pnpm build` | `PASS` — `pixelfit.me` root 후보 31 pages, verifier 525 checks, sitemap 27 URLs, OG 23 files |
+| `pnpm build:custom:test` | `PASS` — 고정 테스트 host root 후보 31 pages, verifier 525 checks |
+| `pnpm test:e2e` | `PASS` — 46 cases 중 45 passed, 동일 viewport 순회를 중복 실행하지 않는 의도된 mobile-project case 1 skipped |
+| `pnpm test:a11y` | `PASS` — 4/4, 13개 도구 초기 상태와 리사이저·변환기 결과 상태의 axe serious/critical 0 |
+| 개인정보 네트워크 가드 | `PASS` — 처리되지 않은 page error, POST/PUT/PATCH/DELETE, 외부 HTTP(S) host, fixture 표식·파일명 유출 0 |
+| 수동 Playwright 화면 | `PASS` — 1440×900, 768×1024, 390×844, 320×568에서 제목 두 줄·가로 overflow 0, 썸네일 편집/결과와 console error 0 |
+| 공개 URL 읽기 전용 smoke | `PASS` — 기존 공개본의 apex HTTPS 200, HTTP→HTTPS 301, `www` 경로 보존 301, 임의 경로 404, robots·sitemap·ads.txt 200, sitemap 27개 고유 URL |
+| hosted CI·공개 후보 fingerprint | `NOT_TESTED` — 로컬 보강 후보를 commit·push·deploy하지 않음 |
+| 외부 계정 | `NOT_TESTED` — Search Console을 변경하지 않았고 AdSense는 기존 `준비 중`, CMP·광고 제공 OFF |
+| 실기기 Safari | `NOT_TESTED` — Playwright WebKit 자동 검사는 통과했지만 실제 기기 수동 검사는 실행하지 않음 |
+
+### Lighthouse 13.4.1 — production static preview
+
+| 경로 | Mobile Performance | Desktop Performance | Accessibility | Best Practices | SEO | CLS |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| `/` | 96 | 100 | 100 | 100 | 100 | 0.000 |
+| `/passport-photo/` | 99 | 100 | 100 | 100 | 100 | 0.000 |
+| `/image-compressor/` | 99 | 100 | 100 | 100 | 100 | 0.000 |
+| `/youtube-thumbnail/` | 99 | 100 | 100 | 100 | 100 | 0.000 |
+| `/four-cut-photo/` | 99 | 100 | 100 | 100 | 100 | 0.000 |
+
+모바일·데스크톱 원본 JSON 10개는 `output/lighthouse/final-*-{mobile,desktop}.json`에 보관했다. 로컬 측정은 실행 환경에 따라 달라질 수 있다. Next.js webpack Worker runtime의 순환 chunk 경고는 남지만 build·기능·정적 산출물 검사는 통과했다.
 
 ## `pixelfit.me` canonical 전환·공개 등록 — 2026-07-25 16:25~16:55 KST, `www` 보정 2026-07-26
 
@@ -14,7 +134,7 @@
 - NC.me OAuth가 처음에는 `DUBEEUBBEE.github.io` 루트 Pages에 새 도메인을 잘못 연결했다. 해당 연결을 제거하고 `DUBEEUBBEE/pixelfit` Pages에 `pixelfit.me`를 저장했다.
 - repository variable `NEXT_PUBLIC_CUSTOM_DOMAIN=pixelfit.me`를 생성했고 새 URL-prefix 속성이 발급한 Google verification 값으로 인증 변수를 갱신했다. 충돌하는 `CUSTOM_DOMAIN` 변수는 없었다.
 - 실제 AdSense 계정의 `NEXT_PUBLIC_ADSENSE_CLIENT`도 repository variable로 추가했다. 이는 account meta와 root `ads.txt`만 만들며, enabled·slot 변수는 두지 않아 광고 loader와 slot은 계속 OFF다.
-- `ca6080c`의 hosted CI `30149561340`과 Pages `30149561395`, Google 인증값 반영을 위한 수동 Pages `30149938432`이 모두 성공했다.
+- 최종 공개 기록 `d054e7c`의 hosted CI `30163705772`, Pages `30163705771`과 deployment `5602429825`가 성공했다. 이전 도메인·Google 인증 반영 run도 성공 기록으로 보존한다.
 - 공개 apex는 GitHub Pages A 레코드 4개로 해석되고 유효한 `pixelfit.me` 인증서로 HTTPS `200`을 반환한다. Pages 인증서 승인 후 `https_enforced=true`로 전환했고 HTTP는 HTTPS로 `301` redirect한다.
 - `www` CNAME 보정과 공개 DNS 전파를 완료했다. GitHub Pages 4개 IPv4 엣지 모두 `pixelfit.me`과 `www.pixelfit.me`을 포함한 인증서를 제공하며, `www`의 HTTP·strict HTTPS 요청은 모두 `https://pixelfit.me/`로 `301` redirect한다.
 - Search Console URL-prefix `https://pixelfit.me/` 소유권을 HTML meta로 확인했다. `/sitemap.xml`은 상태 `성공`, 발견된 페이지 27개다.
@@ -32,7 +152,7 @@
 | 도메인 등록·registrar 설정 | `PASS` — Namecheap ACTIVE, apex A 4개 유지, `www → dubeeubbee.github.io` CNAME 저장·전파, auto-renew OFF, privacy ON |
 | GitHub repository variable·Pages domain | `PASS` — 변수와 Pages 모두 `pixelfit.me`, 잘못 연결된 루트 Pages에서는 제거 |
 | AdSense 계정 확인 입력 | `PASS` — 실제 publisher client 설정, enabled·slot 미설정으로 광고 제공 OFF 유지 |
-| GitHub push·Actions·새 artifact 배포 | `PASS` — `ca6080c`, CI `30149561340`, Pages `30149561395`, 인증 meta 재배포 `30149938432` 성공 |
+| GitHub push·Actions·새 artifact 배포 | `PASS` — `d054e7c`, CI `30163705772`, Pages `30163705771`, deployment `5602429825` 성공 |
 | 공개 SEO·AdSense 파일 | `PASS` — 홈·`robots.txt`·`sitemap.xml`·`ads.txt` HTTPS `200`, canonical·두 계정 meta 일치, sitemap 27 URLs, 광고 loader 0 |
 | 공개 apex DNS·TLS | `PASS` — GitHub Pages A 4개, SAN `pixelfit.me`의 유효한 Let's Encrypt 인증서, strict HTTPS `200` |
 | HTTP→HTTPS 강제 | `PASS` — Pages 인증서 승인·`https_enforced=true`, HTTP→HTTPS `301` 확인 |
@@ -222,7 +342,7 @@ M10 최종 QA와 출시 준비 — 2026-07-22 GitHub Pages 공개 배포 완료
 - Worker·OffscreenCanvas·createImageBitmap 중 하나라도 없으면 로컬 Canvas 폴백을 사용한다. 폴백의 긴 필름 픽셀 루프는 시작·종료 사이 즉시 취소할 수 없다.
 - 네컷 Worker는 합산 6천만 픽셀을 상한으로 순차 decode하지만, 렌더 중 원본 bitmap이 일시적으로 그 상한까지 존재할 수 있어 저메모리 실기기 검증이 남아 있다.
 - production webpack build는 성공하지만 Worker runtime 청크 간 순환 의존 경고가 출력된다. 44개 Chromium/WebKit 브라우저 검사는 통과했고 기능 오류는 관찰되지 않았다.
-- 광고 ON staging, 실제 AdSense/CMP와 Naver 외부 등록은 로컬 코드로 검증하지 않았다. 기존 `pixelfit.o-r.kr`의 TLS는 이후 정상 발급됐지만 이 일반 하위 도메인은 AdSense 등록 가능 루트 도메인을 대신하지 못했다. 새 `pixelfit.me`의 외부 운영 상태는 위 전환 절의 `NOT_TESTED` 항목을 따른다.
+- 광고 ON staging, AdSense 최종 승인·CMP와 Naver 외부 등록은 검증하지 않았다. `pixelfit.me`의 공개 DNS·TLS·Search Console·sitemap·`ads.txt` 소유권·AdSense 검토 요청은 완료됐지만 계정은 `준비 중`이고 광고 제공은 OFF다.
 
 ## 공개 v1 마지막 검증 기록
 
@@ -241,4 +361,4 @@ M10 최종 QA와 출시 준비 — 2026-07-22 GitHub Pages 공개 배포 완료
 - GitHub Pages `29924220581`: build + deploy 성공, `https://dubeeubbee.github.io/pixelfit/`
 - 공개 smoke: 13개 경로 HTTP 200, 홈→여권사진 생성→24,929-byte 413×531 JPG 다운로드, console errors 0 / warnings 0
 
-다음 갱신은 `pixelfit.me` 전환 commit과 GitHub-hosted CI/Pages run, 새 도메인의 DNS·TLS·공개 smoke·Search Console 결과, 이전 주소 redirect, 실기기 Safari·저메모리 대형 이미지 회복력과 AdSense/CMP 운영 검증을 기록한다.
+다음 외부 갱신은 현재 로컬 보강 후보의 commit·GitHub-hosted CI/Pages·공개 fingerprint, 이전 주소 redirect, 실기기 Safari·저메모리 대형 이미지 회복력과 AdSense 승인/CMP 운영 검증을 기록한다.

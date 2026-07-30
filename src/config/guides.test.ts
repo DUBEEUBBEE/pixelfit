@@ -38,9 +38,23 @@ describe("guide registry", () => {
       expect(guide.seo.description.length).toBeGreaterThan(50);
       expect(guide.seo.contentPublishedAt).toMatch(/^\d{4}-\d{2}-\d{2}$/);
       expect(guide.seo.contentUpdatedAt).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+      expect(guide.seo.contentUpdatedAt >= guide.seo.contentPublishedAt).toBe(true);
       expect(guide.source.lastVerifiedAt).toMatch(/^\d{4}-\d{2}-\d{2}$/);
       expect(new URL(guide.source.url).protocol).toBe("https:");
       expect(guide.source.title.length).toBeGreaterThan(3);
+    }
+    const source = readFileSync(path.join(process.cwd(), "src/config/guides.ts"), "utf8");
+    expect(source).not.toMatch(/const\s+(?:contentPublishedAt|contentUpdatedAt)\s*=/u);
+  });
+
+  it("uses reader-facing language and records the copy revision without changing publication dates", () => {
+    const visibleCopy = JSON.stringify(guides);
+    expect(visibleCopy).not.toMatch(/\b(?:Blob|payload|parse|magic bytes|container|signature|MIME)\b/iu);
+    expect(visibleCopy).not.toMatch(/파싱|페이로드|컨테이너|시그니처/u);
+
+    for (const guide of guides) {
+      expect(guide.seo.contentPublishedAt).toBe("2026-07-23");
+      expect(guide.seo.contentUpdatedAt).toBe("2026-07-26");
     }
   });
 

@@ -5,23 +5,25 @@ import { calculateCoverTransform } from "@/lib/image/geometry";
 import type {
   CreativeWorkerFormat,
   CreativeWorkerDonePayload,
-  CreativeWorkerRequest,
+  CreativeWorkerMessageRequest,
   CreativeWorkerResponse,
   CompressionWorkerRequest,
   ConvertWorkerRequest,
   FilmWorkerRequest,
   FourCutWorkerRequest,
   ResizeWorkerRequest,
+  SocialWorkerRequest,
+  ThumbnailWorkerRequest,
 } from "./creative-worker-protocol";
 
 const workerScope: DedicatedWorkerGlobalScope = self as DedicatedWorkerGlobalScope;
 const HEX_COLOR = /^#[0-9a-f]{6}$/i;
 
-workerScope.onmessage = (event: MessageEvent<CreativeWorkerRequest>) => {
+workerScope.onmessage = (event: MessageEvent<CreativeWorkerMessageRequest>) => {
   void renderRequest(event.data);
 };
 
-async function renderRequest(request: CreativeWorkerRequest): Promise<void> {
+async function renderRequest(request: CreativeWorkerMessageRequest): Promise<void> {
   if (typeof OffscreenCanvas !== "function" || typeof createImageBitmap !== "function") {
     post({ type: "error", code: "UNSUPPORTED", message: "이 브라우저 워커에서는 OffscreenCanvas 이미지 처리를 사용할 수 없습니다." });
     return;
@@ -35,10 +37,76 @@ async function renderRequest(request: CreativeWorkerRequest): Promise<void> {
           ? await renderCompression(request)
           : request.kind === "resize"
             ? await renderResize(request)
-            : await renderConvert(request);
+            : request.kind === "convert"
+              ? await renderConvert(request)
+              : request.kind === "social"
+                ? await renderSocial(request)
+                : await renderThumbnail(request);
     post({ type: "done", ...result });
   } catch (error) {
     post({ type: "error", message: error instanceof Error ? error.message : "이미지 워커 처리에 실패했습니다." });
+  }
+}
+
+async function renderSocial(request: SocialWorkerRequest): Promise<CreativeWorkerDonePayload> {
+  let bitmap: ImageBitmap | undefined;
+  try {
+    bitmap = await createImageBitmap(request.file, { imageOrientation: "from-image" });
+    assertBitmapSize(bitmap, request.sourceWidth, request.sourceHeight);
+    postProgress(16);
+    const { renderSocialImage } = await import("@/features/social-image-pack/render");
+    const result = await renderSocialImage(
+      bitmap,
+      { width: request.sourceWidth, height: request.sourceHeight },
+      request.outputId,
+      request.crop,
+      { format: request.format, quality: request.quality },
+    );
+    postProgress(92);
+    return {
+      blob: result.blob,
+      width: result.width,
+      height: result.height,
+      format: result.format,
+      details: { kind: "social", outputId: request.outputId },
+    };
+  } finally {
+    bitmap?.close();
+  }
+}
+
+async function renderThumbnail(request: ThumbnailWorkerRequest): Promise<CreativeWorkerDonePayload> {
+  let bitmap: ImageBitmap | undefined;
+  try {
+    bitmap = await createImageBitmap(request.file, { imageOrientation: "from-image" });
+    assertBitmapSize(bitmap, request.sourceWidth, request.sourceHeight);
+    postProgress(12);
+    const { renderYoutubeThumbnail } = await import("@/features/youtube-thumbnail/render");
+    const result = await renderYoutubeThumbnail(
+      bitmap,
+      { width: request.sourceWidth, height: request.sourceHeight },
+      {
+        template: request.template,
+        title: request.title,
+        subtitle: request.subtitle,
+        crop: request.crop,
+        titleSize: request.titleSize,
+        accentColor: request.accentColor,
+        align: request.align,
+        format: request.format,
+        quality: request.quality,
+      },
+    );
+    postProgress(92);
+    return {
+      blob: result.blob,
+      width: result.width,
+      height: result.height,
+      format: result.format,
+      details: { kind: "thumbnail", titleLines: result.titleLines, subtitleLines: result.subtitleLines },
+    };
+  } finally {
+    bitmap?.close();
   }
 }
 

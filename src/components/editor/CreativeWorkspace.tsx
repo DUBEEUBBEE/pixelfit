@@ -11,6 +11,7 @@ import { FOUR_CUT_SPECS, moveFourCutOrder } from "@/features/four-cut-photo/help
 import type { FourCutOrientation, FourCutTone } from "@/features/four-cut-photo/types";
 import { SOCIAL_ZIP_FILENAME } from "@/features/social-image-pack/package";
 import type { SocialImageResult } from "@/features/social-image-pack/types";
+import { calculateInstagramProfileLayout, INSTAGRAM_PROFILE_DEFAULTS, INSTAGRAM_PROFILE_SIZE } from "@/features/instagram-profile/layout";
 import { youtubeThumbnailTemplates } from "@/features/youtube-thumbnail/templates";
 import type { ThumbnailTemplateId, ThumbnailTextAlign } from "@/features/youtube-thumbnail/types";
 import { calculateThumbnailTextLayout } from "@/features/youtube-thumbnail/layout";
@@ -33,14 +34,152 @@ export function CreativeWorkspace({ presetId, initialFile }: { presetId: string;
   const transferredFile = useIncomingCreativeTransfer(presetId, initialFile);
   const file = initialFile ?? transferredFile;
   if (presetId === "social-image-pack") return <SocialWorkspace initialFile={file} />;
+  if (presetId === "instagram-profile-picture") return <InstagramProfileWorkspace initialFile={file} />;
   if (presetId === "youtube-thumbnail") return <ThumbnailWorkspace initialFile={file} />;
   if (presetId === "four-cut-photo") return <FourCutWorkspace initialFile={file} />;
   if (presetId === "film-photo") return <FilmWorkspace initialFile={file} />;
   throw new Error(`지원하지 않는 크리에이티브 도구입니다: ${presetId}`);
 }
 
+const instagramProfileThemes = {
+  coral: { label: "코랄", borderColor: "#ff725e", canvasColor: "#fff3ee", innerColor: "#ffffff" },
+  lavender: { label: "라벤더", borderColor: "#8b7cf6", canvasColor: "#f1efff", innerColor: "#ffffff" },
+  mint: { label: "민트", borderColor: "#25b98d", canvasColor: "#ecfbf6", innerColor: "#ffffff" },
+  mono: { label: "모노", borderColor: "#14213d", canvasColor: "#f1f3f5", innerColor: "#ffffff" },
+} as const;
+
+function InstagramProfileWorkspace({ initialFile }: { initialFile?: File }) {
+  const image = useUtilityImage({ retainBytes: false });
+  const generated = useUtilityResult();
+  const processor = useUtilityProcessor();
+  const [step, setStep] = useState<Step>(1);
+  const [circleScale, setCircleScale] = useState<number>(INSTAGRAM_PROFILE_DEFAULTS.circleScale);
+  const [photoScale, setPhotoScale] = useState<number>(INSTAGRAM_PROFILE_DEFAULTS.photoScale);
+  const [borderWidth, setBorderWidth] = useState<number>(INSTAGRAM_PROFILE_DEFAULTS.borderWidth);
+  const [borderColor, setBorderColor] = useState<string>(INSTAGRAM_PROFILE_DEFAULTS.borderColor);
+  const [canvasColor, setCanvasColor] = useState<string>(INSTAGRAM_PROFILE_DEFAULTS.canvasColor);
+  const [innerColor, setInnerColor] = useState<string>(INSTAGRAM_PROFILE_DEFAULTS.innerColor);
+  const [offsetX, setOffsetX] = useState<number>(INSTAGRAM_PROFILE_DEFAULTS.offsetX);
+  const [offsetY, setOffsetY] = useState<number>(INSTAGRAM_PROFILE_DEFAULTS.offsetY);
+  const [format, setFormat] = useState<RasterFormat>("png");
+  const [quality, setQuality] = useState(.94);
+
+  const choose = async (file: File) => {
+    processor.cancel();
+    generated.clearResult();
+    const asset = await image.choose(file);
+    if (!asset) return;
+    setStep(2);
+  };
+  useInitialCreativeFile(initialFile, choose);
+
+  const applyTheme = (theme: (typeof instagramProfileThemes)[keyof typeof instagramProfileThemes]) => {
+    setBorderColor(theme.borderColor);
+    setCanvasColor(theme.canvasColor);
+    setInnerColor(theme.innerColor);
+  };
+
+  const createResult = async () => {
+    const asset = image.asset;
+    if (!asset) return;
+    const result = await processor.run(async (signal, onProgress) => {
+      onProgress(15);
+      const { renderInstagramProfile } = await import("@/features/instagram-profile/render");
+      const rendered = await renderInstagramProfile(
+        asset.decoded.source,
+        { width: asset.decoded.width, height: asset.decoded.height },
+        { circleScale, photoScale, borderWidth, borderColor, canvasColor, innerColor, offsetX, offsetY, format, quality, signal },
+      );
+      onProgress(100);
+      return rendered;
+    });
+    if (!result) return;
+    generated.setResult({
+      blob: result.blob,
+      filename: result.filename,
+      width: result.width,
+      height: result.height,
+      format: result.format,
+      warnings: ["Instagram 앱의 최종 압축과 원형 마스크 크기는 화면과 앱 버전에 따라 달라질 수 있습니다."],
+      facts: [
+        { label: "출력 크기", value: `${result.width}×${result.height}px · 1:1` },
+        { label: "사진 원", value: `캔버스의 ${Math.round(circleScale * 100)}% · 사진 ${Math.round(photoScale * 100)}%` },
+        { label: "테두리", value: `${Math.round(result.layout.borderWidth)}px · ${borderColor.toUpperCase()}` },
+        { label: "파일", value: `${formatLabel(result.format)} · ${formatBytes(result.blob.size)}` },
+        { label: "배치 방식", value: "사진 축소 후 작은 원 안에 합성" },
+        { label: "검증", value: "형식·가로·세로 크기 재확인 완료" },
+      ],
+    });
+    setStep(3);
+  };
+
+  const reset = () => {
+    processor.cancel();
+    generated.clearResult();
+    image.reset();
+    setStep(1);
+  };
+
+  return <Workspace title="인스타그램 프로필 사진" step={step}>
+    {step === 1 && <UploadPanel onFile={choose} error={image.error} busy={image.busy} />}
+    {step === 2 && image.asset && <EditorLayout>
+      <div className="preview-column">
+        <InstagramProfilePreview
+          asset={image.asset}
+          circleScale={circleScale}
+          photoScale={photoScale}
+          borderWidth={borderWidth}
+          borderColor={borderColor}
+          canvasColor={canvasColor}
+          innerColor={innerColor}
+          offsetX={offsetX}
+          offsetY={offsetY}
+        />
+        <div className="preview-caption"><span>{INSTAGRAM_PROFILE_SIZE}×{INSTAGRAM_PROFILE_SIZE}px</span><span>바깥 점선은 Instagram 원형 표시 예상</span></div>
+        <div style={{ width: 112, margin: "1rem auto 0" }}>
+          <InstagramProfilePreview
+            asset={image.asset}
+            circleScale={circleScale}
+            photoScale={photoScale}
+            borderWidth={borderWidth}
+            borderColor={borderColor}
+            canvasColor={canvasColor}
+            innerColor={innerColor}
+            offsetX={offsetX}
+            offsetY={offsetY}
+            compact
+          />
+          <p style={{ margin: ".4rem 0 0", textAlign: "center", fontSize: ".72rem", color: "var(--muted)" }}>작은 목록 표시 예상</p>
+        </div>
+      </div>
+      <div className="control-panel">
+        <div className="control-card"><h3>테두리 빠른 색상</h3><div className="variant-grid">{Object.values(instagramProfileThemes).map((theme) => <button type="button" className="variant-button" key={theme.label} onClick={() => applyTheme(theme)}><strong>{theme.label}</strong><span><i aria-hidden="true" style={{ display: "inline-block", width: 12, height: 12, marginRight: 5, borderRadius: "50%", background: theme.borderColor, verticalAlign: -1 }} />{theme.borderColor.toUpperCase()}</span></button>)}</div></div>
+        <div className="control-card">
+          <h3>작은 원과 사진 크기</h3>
+          <div className="range-row"><label htmlFor="instagram-circle-scale">사진 원 크기 <span>{Math.round(circleScale * 100)}%</span></label><input id="instagram-circle-scale" type="range" min=".64" max=".94" step=".01" value={circleScale} onChange={(event) => setCircleScale(Number(event.target.value))} /></div>
+          <div className="range-row" style={{ marginTop: ".8rem" }}><label htmlFor="instagram-photo-scale">원 안 사진 크기 <span>{Math.round(photoScale * 100)}%</span></label><input id="instagram-photo-scale" type="range" min=".5" max="1" step=".01" value={photoScale} onChange={(event) => setPhotoScale(Number(event.target.value))} /></div>
+          <div className="range-row" style={{ marginTop: ".8rem" }}><label htmlFor="instagram-border-width">테두리 두께 <span>{borderWidth}px</span></label><input id="instagram-border-width" type="range" min="0" max="120" step="2" value={borderWidth} onChange={(event) => setBorderWidth(Number(event.target.value))} /></div>
+        </div>
+        <div className="control-card">
+          <h3>사진 위치</h3>
+          <div className="range-row"><label htmlFor="instagram-offset-x">가로 위치 <span>{Math.round(offsetX * 100)}</span></label><input id="instagram-offset-x" type="range" min="-1" max="1" step=".01" value={offsetX} onChange={(event) => setOffsetX(Number(event.target.value))} /></div>
+          <div className="range-row" style={{ marginTop: ".8rem" }}><label htmlFor="instagram-offset-y">세로 위치 <span>{Math.round(offsetY * 100)}</span></label><input id="instagram-offset-y" type="range" min="-1" max="1" step=".01" value={offsetY} onChange={(event) => setOffsetY(Number(event.target.value))} /></div>
+          <button className="button secondary" type="button" style={{ marginTop: ".8rem" }} onClick={() => { setOffsetX(0); setOffsetY(0); }}>사진 가운데 맞춤</button>
+        </div>
+        <div className="control-card"><h3>색상 직접 선택</h3><div className="profile-color-grid"><div className="field"><label htmlFor="instagram-border-color">테두리</label><input id="instagram-border-color" type="color" value={borderColor} onChange={(event) => setBorderColor(event.target.value)} /></div><div className="field"><label htmlFor="instagram-inner-color">원 안 여백</label><input id="instagram-inner-color" type="color" value={innerColor} onChange={(event) => setInnerColor(event.target.value)} /></div><div className="field"><label htmlFor="instagram-canvas-color">바깥 배경</label><input id="instagram-canvas-color" type="color" value={canvasColor} onChange={(event) => setCanvasColor(event.target.value)} /></div></div></div>
+        <RasterFormatControls format={format} onChange={setFormat} quality={quality} onQuality={setQuality} idPrefix="instagram-profile" />
+        <div className="info-box">기본값은 사진을 꽉 채워 자르지 않고 먼저 줄여 작은 원 안에 배치합니다. 직사각형 사진의 네 모서리는 원형 마스크 때문에 보이지 않을 수 있으므로 왼쪽 미리보기에서 확인하세요.</div>
+        <div className="info-box"><LockKeyhole size={18} aria-hidden="true" /><div>사진과 결과는 서버에 업로드하거나 저장하지 않고 현재 브라우저 메모리에서만 처리합니다.</div></div>
+        <ProcessingState {...processor} />
+        <div className="editor-actions"><button className="button ghost" type="button" onClick={reset}>다른 사진 선택</button><button className="button primary" type="button" disabled={processor.busy} onClick={() => void createResult()}>인스타 프로필 사진 만들기</button></div>
+      </div>
+    </EditorLayout>}
+    {step === 3 && image.asset && generated.result && <SingleResult toolId="instagram-profile-picture" title="작은 원과 색 테두리를 적용했습니다." asset={image.asset} result={generated.result} onBack={() => setStep(2)} onReset={reset} error={processor.error} onError={processor.setError} />}
+  </Workspace>;
+}
+
 function SocialWorkspace({ initialFile }: { initialFile?: File }) {
-  const image = useUtilityImage();
+  const image = useUtilityImage({ retainBytes: false });
   const processor = useUtilityProcessor();
   const generated = useSocialGenerated();
   const [step, setStep] = useState<Step>(1);
@@ -95,7 +234,7 @@ function SocialWorkspace({ initialFile }: { initialFile?: File }) {
       const { renderSocialImage } = await import("@/features/social-image-pack/render");
       const items: SocialImageResult[] = [];
       for (let index = 0; index < ids.length; index += 1) {
-        items.push(await renderSocialImage(asset.decoded.source, { width: asset.decoded.width, height: asset.decoded.height }, ids[index], crops[ids[index]], { format, quality, signal }));
+        items.push(await renderSocialImage(asset.decoded.source, { width: asset.decoded.width, height: asset.decoded.height }, ids[index], crops[ids[index]], { sourceFile: asset.file, format, quality, signal }));
         onProgress(((index + 1) / ids.length) * 100);
       }
       return items;
@@ -132,7 +271,7 @@ function SocialWorkspace({ initialFile }: { initialFile?: File }) {
 }
 
 function ThumbnailWorkspace({ initialFile }: { initialFile?: File }) {
-  const image = useUtilityImage();
+  const image = useUtilityImage({ retainBytes: false });
   const generated = useUtilityResult();
   const processor = useUtilityProcessor();
   const [step, setStep] = useState<Step>(1);
@@ -160,7 +299,7 @@ function ThumbnailWorkspace({ initialFile }: { initialFile?: File }) {
     const result = await processor.run((signal, onProgress) => {
       onProgress(12);
       return import("@/features/youtube-thumbnail/render")
-        .then(({ renderYoutubeThumbnail }) => renderYoutubeThumbnail(asset.decoded.source, { width: asset.decoded.width, height: asset.decoded.height }, { template, title, subtitle, crop, titleSize, accentColor, align, format, quality, signal }))
+        .then(({ renderYoutubeThumbnail }) => renderYoutubeThumbnail(asset.decoded.source, { width: asset.decoded.width, height: asset.decoded.height }, { sourceFile: asset.file, template, title, subtitle, crop, titleSize, accentColor, align, format, quality, signal }))
         .then((value) => { onProgress(100); return value; });
     });
     if (!result) return;
@@ -172,7 +311,7 @@ function ThumbnailWorkspace({ initialFile }: { initialFile?: File }) {
         { label: "파일 형식", value: formatLabel(result.format) },
         { label: "제목 줄 수", value: `${result.titleLines.length}줄 (최대 2줄)` },
         { label: "템플릿", value: youtubeThumbnailTemplates[template].label },
-        { label: "검증", value: "MIME·서명·픽셀 재검사 완료" },
+        { label: "검증", value: "형식·가로·세로 크기 확인 완료" },
       ],
     });
     setStep(3);
@@ -243,7 +382,7 @@ function FourCutWorkspace({ initialFile }: { initialFile?: File }) {
         { label: "톤", value: tone === "original" ? "원본 색상" : tone === "mono" ? "흑백" : "빈티지 포토부스" },
         { label: "파일 용량", value: formatBytes(result.blob.size) },
         { label: "파일 형식", value: formatLabel(result.format) },
-        { label: "실제 파일", value: "서명·MIME·픽셀 재검사 완료" },
+        { label: "실제 파일", value: "형식·가로·세로 크기 확인 완료" },
       ],
     });
     setStep(3);
@@ -258,7 +397,7 @@ function FourCutWorkspace({ initialFile }: { initialFile?: File }) {
         <div className="control-card"><h3>서비스 레이아웃</h3><div className="variant-grid">{(["vertical", "horizontal"] as const).map((item) => <button key={item} type="button" className={`variant-button ${orientation === item ? "selected" : ""}`} aria-pressed={orientation === item} onClick={() => setOrientation(item)}><strong>{item === "vertical" ? "세로 네컷" : "가로 네컷"}</strong><span>{FOUR_CUT_SPECS[item].width}×{FOUR_CUT_SPECS[item].height}px</span></button>)}</div></div>
         <div className="control-card"><h3>조정할 칸</h3><div className="format-row">{order.map((sourceIndex, index) => <button type="button" key={index} className={`segmented ${activeSlot === index ? "selected" : ""}`} aria-pressed={activeSlot === index} onClick={() => setActiveSlot(index)}>{index + 1}칸</button>)}</div><p style={{ fontSize: ".78rem", color: "var(--muted)" }}>현재 {order[activeSlot] + 1}번 사진: {images.assets[order[activeSlot]]?.file.name}</p><div className="format-row"><button className="button secondary" type="button" disabled={activeSlot === 0} onClick={() => setOrder((current) => moveFourCutOrder(current, activeSlot, -1))}><ArrowUp size={16} />앞으로</button><button className="button secondary" type="button" disabled={activeSlot === 3} onClick={() => setOrder((current) => moveFourCutOrder(current, activeSlot, 1))}><ArrowDown size={16} />뒤로</button></div></div>
         <CropControls idPrefix="four-cut" crop={crops[activeSlot]} onChange={updateCrop} />
-        <div className="control-card"><h3>포토부스 톤</h3><div className="format-row">{(["original", "mono", "vintage"] as const).map((item) => <button key={item} type="button" className={`segmented ${tone === item ? "selected" : ""}`} aria-pressed={tone === item} onClick={() => setTone(item)}>{item === "original" ? "원본" : item === "mono" ? "흑백" : "빈티지"}</button>)}</div><div className="field" style={{ marginTop: ".7rem" }}><label htmlFor="four-cut-frame">프레임 색상</label><input id="four-cut-frame" type="color" value={frameColor} onChange={(event) => setFrameColor(event.target.value)} /></div></div>
+        <div className="control-card"><h3>포토부스 톤</h3><div className="format-row">{(["original", "mono", "vintage"] as const).map((item) => <button key={item} type="button" className={`segmented ${tone === item ? "selected" : ""}`} aria-pressed={tone === item} onClick={() => setTone(item)}>{item === "original" ? "원본" : item === "mono" ? "흑백" : "빈티지"}</button>)}</div><div className="field" style={{ marginTop: ".7rem" }}><label htmlFor="four-cut-frame">프레임 색상 선택</label><input id="four-cut-frame" type="color" value={frameColor} aria-describedby="four-cut-frame-value" onChange={(event) => setFrameColor(event.target.value)} /><span id="four-cut-frame-value" aria-live="polite">현재 프레임 색상 <strong>{frameColor.toUpperCase()}</strong></span></div></div>
         <div className="control-card"><div className="field"><label htmlFor="four-cut-date">날짜 (선택)</label><input id="four-cut-date" type="date" value={dateText} onChange={(event) => setDateText(event.target.value)} /></div><div className="field" style={{ marginTop: ".7rem" }}><label htmlFor="four-cut-caption">짧은 문구 (선택)</label><input id="four-cut-caption" type="text" maxLength={40} value={caption} onChange={(event) => setCaption(event.target.value)} /></div></div>
         <RasterFormatControls format={format} onChange={setFormat} quality={quality} onQuality={setQuality} idPrefix="four-cut" />
         <div className="info-box">인쇄 승인이나 공식 규격이 아닌 디지털 공유용 서비스 프리셋입니다. 순서 버튼은 키보드로도 사용할 수 있습니다.</div>
@@ -271,7 +410,7 @@ function FourCutWorkspace({ initialFile }: { initialFile?: File }) {
 }
 
 function FilmWorkspace({ initialFile }: { initialFile?: File }) {
-  const image = useUtilityImage();
+  const image = useUtilityImage({ retainBytes: false });
   const generated = useUtilityResult();
   const processor = useUtilityProcessor();
   const [step, setStep] = useState<Step>(1);
@@ -312,9 +451,9 @@ function FilmWorkspace({ initialFile }: { initialFile?: File }) {
         { label: "효과 모드", value: filmModeLabel(mode) },
         { label: "출력 크기", value: `${result.width}×${result.height}px` },
         { label: "파일 용량", value: formatBytes(result.blob.size) },
-        { label: "결정적 처리", value: "동일 옵션·seed에서 동일 grain" },
+        { label: "반복 가능한 결과", value: "같은 사진·설정이면 같은 입자감" },
         { label: "생성형 AI", value: "사용 안 함" },
-        { label: "실제 파일", value: "서명·MIME·픽셀 재검사 완료" },
+        { label: "실제 파일", value: "형식·가로·세로 크기 확인 완료" },
       ],
     });
     setStep(3);
@@ -325,21 +464,21 @@ function FilmWorkspace({ initialFile }: { initialFile?: File }) {
   return <Workspace title="필름사진" step={step}>
     {step === 1 && <UploadPanel onFile={choose} error={image.error} busy={image.busy} />}
     {step === 2 && image.asset && <EditorLayout>
-      <div className="preview-column"><div className="result-preview"><img src={image.asset.previewUrl} alt="필름 효과 예상 미리보기" style={{ filter: previewFilter }} /><p style={{ fontSize: ".78rem", color: "var(--muted)" }}>빠른 색감 예상입니다. grain·비네팅·빛샘은 파일 생성 후 정확히 확인합니다.</p></div></div>
+      <div className="preview-column"><div className="result-preview"><img src={image.asset.previewUrl} alt="필름 효과 예상 미리보기" style={{ filter: previewFilter }} /><p style={{ fontSize: ".78rem", color: "var(--muted)" }}>빠른 색감 예상입니다. 입자감·가장자리 어둡기·빛샘은 파일 생성 후 정확히 확인합니다.</p></div></div>
       <div className="control-panel">
-        <div className="control-card"><h3>필름 모드</h3><div className="variant-grid">{(["color", "mono", "low-saturation", "flash"] as const).map((item) => <button key={item} type="button" className={`variant-button ${mode === item ? "selected" : ""}`} aria-pressed={mode === item} onClick={() => setMode(item)}><strong>{filmModeLabel(item)}</strong><span>{item === "color" ? "따뜻한 컬러 필름" : item === "mono" ? "결정적 흑백 변환" : item === "low-saturation" ? "차분한 저채도" : "밝은 플래시 카메라"}</span></button>)}</div></div>
+        <div className="control-card"><h3>필름 모드</h3><div className="variant-grid">{(["color", "mono", "low-saturation", "flash"] as const).map((item) => <button key={item} type="button" className={`variant-button ${mode === item ? "selected" : ""}`} aria-pressed={mode === item} onClick={() => setMode(item)}><strong>{filmModeLabel(item)}</strong><span>{item === "color" ? "따뜻한 컬러 필름" : item === "mono" ? "또렷한 흑백 변환" : item === "low-saturation" ? "차분한 저채도" : "밝은 플래시 카메라"}</span></button>)}</div></div>
         <RangeControl id="film-strength" label="전체 강도" value={strength} onChange={setStrength} />
         <RangeControl id="film-grain" label="필름 그레인" value={grain} onChange={setGrain} />
         <RangeControl id="film-vignette" label="비네팅" value={vignette} onChange={setVignette} />
         <RangeControl id="film-light-leak" label="빛샘" value={lightLeak} onChange={setLightLeak} />
         <div className="control-card"><div className="field"><label htmlFor="film-date">날짜 스탬프 (선택)</label><input id="film-date" type="date" value={dateText} onChange={(event) => setDateText(event.target.value)} /></div></div>
         <RasterFormatControls format={format} onChange={setFormat} quality={quality} onQuality={setQuality} idPrefix="film" />
-        <div className="warning-box">생성형 AI를 사용하지 않는 결정적 픽셀 필터입니다. 과도한 효과는 피부색과 장면의 의미를 왜곡할 수 있습니다.</div>
+        <div className="warning-box">생성형 AI를 사용하지 않고 사진의 색과 밝기를 기기 안에서 바꿉니다. 과도한 효과는 피부색과 장면의 의미를 왜곡할 수 있습니다.</div>
         <ProcessingState {...processor} />
         <div className="editor-actions"><button className="button ghost" type="button" onClick={resetToOriginal}><RotateCcw size={16} />원본으로 초기화</button><button className="button ghost" type="button" onClick={reset}>다른 사진</button><button className="button primary" type="button" disabled={processor.busy} onClick={() => void createResult()}>필름사진 만들기</button></div>
       </div>
     </EditorLayout>}
-    {step === 3 && image.asset && generated.result && <SingleResult toolId="film-photo" title="결정적 필름 효과를 적용했습니다." asset={image.asset} result={generated.result} onBack={() => setStep(2)} onReset={reset} error={processor.error} onError={processor.setError} />}
+    {step === 3 && image.asset && generated.result && <SingleResult toolId="film-photo" title="필름 효과를 적용했습니다." asset={image.asset} result={generated.result} onBack={() => setStep(2)} onReset={reset} error={processor.error} onError={processor.setError} />}
   </Workspace>;
 }
 
@@ -352,6 +491,70 @@ function CropControls({ idPrefix, crop, onChange }: { idPrefix: string; crop: Cr
 
 function CropPreview({ asset, crop, output, label, safe = false, circle = false }: { asset: UtilityImageAsset; crop: CropTransform; output: { width: number; height: number }; label: string; safe?: boolean; circle?: boolean }) {
   return <div className="result-preview" style={{ position: "relative", overflow: "hidden", aspectRatio: `${output.width} / ${output.height}`, padding: 0 }}><img src={asset.previewUrl} alt={label} style={{ ...cropPreviewImageStyle({ width: asset.decoded.width, height: asset.decoded.height }, output, crop), boxShadow: "none" }} />{safe && <div aria-hidden="true" style={{ position: "absolute", inset: "12% 6%", border: "2px dashed #ffcf52" }} />}{circle && <div aria-hidden="true" style={{ position: "absolute", inset: "8%", border: "3px solid #ffcf52", borderRadius: "50%", boxShadow: "0 0 0 999px rgba(8,12,20,.2)" }} />}</div>;
+}
+
+function InstagramProfilePreview({
+  asset,
+  circleScale,
+  photoScale,
+  borderWidth,
+  borderColor,
+  canvasColor,
+  innerColor,
+  offsetX,
+  offsetY,
+  compact = false,
+}: {
+  asset: UtilityImageAsset;
+  circleScale: number;
+  photoScale: number;
+  borderWidth: number;
+  borderColor: string;
+  canvasColor: string;
+  innerColor: string;
+  offsetX: number;
+  offsetY: number;
+  compact?: boolean;
+}) {
+  const layout = calculateInstagramProfileLayout(
+    { width: asset.decoded.width, height: asset.decoded.height },
+    { circleScale, photoScale, borderWidth, offsetX, offsetY },
+  );
+  const outerDiameter = layout.outerRadius * 2;
+  const innerDiameter = layout.innerRadius * 2;
+  const innerLeft = layout.center - layout.innerRadius;
+  const innerTop = layout.center - layout.innerRadius;
+  return <div className="instagram-profile-preview" style={{ borderRadius: compact ? 12 : 22, background: canvasColor }}>
+    <div className="instagram-platform-mask" aria-hidden="true" />
+    <div
+      className="instagram-photo-ring"
+      style={{
+        width: `${outerDiameter / INSTAGRAM_PROFILE_SIZE * 100}%`,
+        height: `${outerDiameter / INSTAGRAM_PROFILE_SIZE * 100}%`,
+        background: borderColor,
+      }}
+    >
+      <div
+        className="instagram-photo-inner"
+        style={{
+          inset: `${layout.borderWidth / outerDiameter * 100}%`,
+          background: innerColor,
+        }}
+      >
+        <img
+          src={asset.previewUrl}
+          alt={compact ? "인스타그램 작은 프로필 표시 예상" : "인스타그램 프로필 사진 원형 배치 예상"}
+          style={{
+            position: "absolute",
+            left: `${(layout.imageX - innerLeft) / innerDiameter * 100}%`,
+            top: `${(layout.imageY - innerTop) / innerDiameter * 100}%`,
+            width: `${layout.imageWidth / innerDiameter * 100}%`,
+            height: `${layout.imageHeight / innerDiameter * 100}%`,
+          }}
+        />
+      </div>
+    </div>
+  </div>;
 }
 
 function ThumbnailPreview({ asset, crop, template, title, subtitle, titleSize, align, accentColor, compact = false }: { asset: UtilityImageAsset; crop: CropTransform; template: ThumbnailTemplateId; title: string; subtitle: string; titleSize: number; align: ThumbnailTextAlign; accentColor: string; compact?: boolean }) {
@@ -418,7 +621,7 @@ function SingleResult({ toolId, title, asset, result, onBack, onReset, error, on
 function SocialResultView({ asset, results, processor, onBack, onReset }: { asset: UtilityImageAsset; results: Array<SocialImageResult & { url: string }>; processor: ReturnType<typeof useUtilityProcessor>; onBack: () => void; onReset: () => void }) {
   const tool = getClientTool("social-image-pack");
   const downloadZip = async () => { const blob = await processor.run(async (_signal, onProgress) => { onProgress(20); const { buildSocialImageZip } = await import("@/features/social-image-pack/package"); onProgress(30); const zip = await buildSocialImageZip(results); onProgress(100); return zip; }); if (blob && !safeDownload(blob, SOCIAL_ZIP_FILENAME)) processor.setError("ZIP 다운로드가 차단되었습니다."); };
-  return <div><div className="section-heading"><span className="eyebrow">선택 결과 {results.length}개</span><h2>SNS 이미지 세트가 준비됐습니다.</h2><p>각 비율의 실제 MIME·서명·픽셀을 다시 확인했습니다.</p></div><div className="tool-grid">{results.map((result) => <article className="tool-card" key={result.id}><img src={result.url} alt={`${result.label} 완성 미리보기`} style={{ width: "100%", maxHeight: 220, objectFit: "contain" }} /><h3>{result.label}</h3><p>{result.width}×{result.height}px · {formatBytes(result.blob.size)}</p><button className="button secondary" type="button" onClick={() => { if (!safeDownload(result.blob, result.filename)) processor.setError("다운로드가 차단되었습니다."); }}><Download size={17} />개별 다운로드</button></article>)}</div>{processor.error && <div className="error-box" role="alert" style={{ marginTop: "1rem" }}>{processor.error}</div>}<ProcessingState {...processor} /><div className="result-actions"><button className="button primary" type="button" disabled={processor.busy} onClick={() => void downloadZip()}><Package size={18} />전체 ZIP 다운로드</button><button className="button ghost" type="button" onClick={onBack}>크롭 다시 조정</button><button className="button ghost" type="button" onClick={onReset}>처음부터 다시</button></div>{tool && results[0] && <NextToolActions sourceToolId={tool.id} targetIds={tool.nextToolIds} asset={results[0].blob} filename={results[0].filename} />}<p className="local-note"><LockKeyhole size={15} />원본 {asset.file.name}과 결과는 현재 탭 메모리에서만 유지됩니다.</p></div>;
+  return <div><div className="section-heading"><span className="eyebrow">선택 결과 {results.length}개</span><h2>SNS 이미지 세트가 준비됐습니다.</h2><p>각 비율 결과의 파일 형식과 가로·세로 크기를 다시 확인했습니다.</p></div><div className="tool-grid">{results.map((result) => <article className="tool-card" key={result.id}><img src={result.url} alt={`${result.label} 완성 미리보기`} style={{ width: "100%", maxHeight: 220, objectFit: "contain" }} /><h3>{result.label}</h3><p>{result.width}×{result.height}px · {formatBytes(result.blob.size)}</p><button className="button secondary" type="button" onClick={() => { if (!safeDownload(result.blob, result.filename)) processor.setError("다운로드가 차단되었습니다."); }}><Download size={17} />개별 다운로드</button></article>)}</div>{processor.error && <div className="error-box" role="alert" style={{ marginTop: "1rem" }}>{processor.error}</div>}<ProcessingState {...processor} /><div className="result-actions"><button className="button primary" type="button" disabled={processor.busy} onClick={() => void downloadZip()}><Package size={18} />전체 ZIP 다운로드</button><button className="button ghost" type="button" onClick={onBack}>크롭 다시 조정</button><button className="button ghost" type="button" onClick={onReset}>처음부터 다시</button></div>{tool && results[0] && <NextToolActions sourceToolId={tool.id} targetIds={tool.nextToolIds} asset={results[0].blob} filename={results[0].filename} />}<p className="local-note"><LockKeyhole size={15} />원본 {asset.file.name}과 결과는 현재 탭 메모리에서만 유지됩니다.</p></div>;
 }
 
 function useSocialGenerated() {

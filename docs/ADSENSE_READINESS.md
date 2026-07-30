@@ -1,6 +1,6 @@
 # AdSense readiness
 
-Last verified: 2026-07-25
+Last verified: 2026-07-26
 
 AdSense ad serving is disabled by default. This repository separates account-identification surfaces from the ad-serving gate; neither path claims account approval, site approval, active ad serving, consent compliance, or revenue readiness.
 
@@ -40,6 +40,8 @@ This allows the account/site connection surface to be prepared without activatin
 
 The 2026-07-23 OFF-build result with no client remains a historical pass: it contained no loader, publisher marker, slot, or `ads.txt`. On 2026-07-25 the decoupled account-identification path was deployed to `pixelfit.me` with the publisher issued by the live account. The public meta and root `ads.txt` were verified, AdSense accepted the `ads.txt` ownership check, and site review was requested. The account status is `준비 중`; approval, CMP behavior, active ad serving, and live ad requests remain `NOT_TESTED`.
 
+The 2026-07-26 P7 worktree is a local build and QA candidate only. Final `pnpm check` passed the Pages/custom verifiers at 617/618 checks, `pnpm build:custom:test` passed 618 checks, and the last production custom build passed 618 checks. The final custom output had `CNAME=pixelfit.me`, a root `ads.txt` line matching the live publisher, and `google-adsense-account` meta on 30 HTML files. Ad serving remained OFF: the output contained zero runtime markers for the loader, `adsbygoogle`, or PixelFit ad slots. P7 did not change Search Console properties, ownership tokens, sitemap submissions, AdSense account settings, site-review state, publisher identifiers, or the external approval request. Local QA is not new evidence of Search Console or AdSense account state.
+
 ## ads.txt
 
 Google describes ads.txt as optional but strongly recommended. It must be reachable at the site's domain root and must contain the operator's real publisher ID in `pub-` form.
@@ -78,6 +80,16 @@ The first three steps below were performed on 2026-07-25. Before activating ads,
 8. Verify `ads.txt`, policy center status, and live requests without clicking live ads.
 
 Google states that site review usually takes several days and can take two to four weeks. CMP certification also does not establish full compliance with the TCF or applicable law; the publisher remains responsible for the consent message and legal implementation.
+
+Operator safeguards and next actions still requiring direct confirmation:
+
+- turn registrar auto-renew ON for the production domain and confirm the payment method; the last recorded registrar state is auto-renew OFF;
+- turn on or confirm two-step verification for the operator's Gmail account;
+- wait for the live AdSense site status to become `준비됨` before any ad-serving change;
+- after `준비됨`, configure and test the required CMP and consent states before enabling ads;
+- only after the CMP check, review the three allowlisted placements on desktop and mobile, then verify policy-center and live-request behavior without clicking ads.
+
+All five bullets remain operator work, not completed P7 repository work. Domain renewal, Gmail security, AdSense approval, CMP readiness, placement approval, consent behavior, active requests, and revenue remain unverified.
 
 Official references:
 

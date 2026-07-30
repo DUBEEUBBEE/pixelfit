@@ -15,6 +15,8 @@ export type SocialImageResult = {
 };
 
 export type SocialRenderOptions = {
+  /** Original local file used only for the worker path; never uploaded or persisted. */
+  sourceFile?: Blob;
   format: Extract<ImageOutputFormat, "jpeg" | "png">;
   quality?: number;
   backgroundColor?: string;

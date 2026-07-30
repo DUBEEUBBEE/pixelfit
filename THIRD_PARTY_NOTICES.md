@@ -1,10 +1,10 @@
 # 제3자 고지
 
-Inventory 확인일: 2026-07-23
+Inventory 확인일: 2026-07-26
 
 픽셀핏 자체 package는 `UNLICENSED`다. 아래 목록은 확인일의 `package.json`과 lockfile/install에서 확인한 직접 의존성이다. release artifact의 전체 transitive dependency 라이선스 검토를 대신하지 않는다.
 
-2026-07-23 로컬 v2 후보의 7개 추가 도구, 8개 가이드, 환경설정, 광고 게이트와 OG 자산을 위해 **새 직접 runtime 또는 development dependency를 추가하지 않았다.** 버전과 직접 dependency 구성은 공개 v1과 동일하다.
+7개 추가 도구, 8개 가이드, 환경설정, 광고 게이트, OG 자산과 2026-07-26 안전성 보강을 위해 **새 직접 runtime 또는 development dependency를 추가하지 않았다.** 현재 `package.json`의 직접 dependency와 고정 버전은 아래와 같다.
 
 ## Runtime dependencies
 

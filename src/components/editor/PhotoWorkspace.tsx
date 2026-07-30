@@ -103,7 +103,7 @@ export function PhotoWorkspace({ preset }: { preset: ImagePreset }) {
     setError(null);
     cleanupResult();
     try {
-      await validateImageFile(nextFile, preset.input.maxBytes);
+      await validateImageFile(nextFile, preset.input.maxBytes, preset.input.maxPixels);
       const nextDecoded = await decodeImage(nextFile, preset.input.maxPixels);
       if (task !== taskRef.current) { nextDecoded.close(); return; }
       decodedRef.current?.close();

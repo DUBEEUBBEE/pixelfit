@@ -1,3 +1,5 @@
+import type { ToolBadgeKind } from "./tool-badges";
+
 export const clientWorkspaceKinds = [
   "photo",
   "favicon",
@@ -6,6 +8,7 @@ export const clientWorkspaceKinds = [
   "resizer",
   "converter",
   "social-pack",
+  "instagram-profile",
   "youtube-thumbnail",
   "four-cut",
   "film",
@@ -33,9 +36,10 @@ export const clientTools = [
   { id: "image-resizer", slug: "image-resizer", title: "이미지 크기 조절", displaySpec: "직접 픽셀·긴 변·퍼센트", workspaceKind: "resizer", nextToolIds: ["image-compressor", "image-converter", "favicon-maker"] },
   { id: "image-converter", slug: "image-converter", title: "이미지 형식 변환", displaySpec: "JPEG ↔ PNG ↔ WebP", workspaceKind: "converter", nextToolIds: ["image-compressor", "image-resizer", "photo-privacy-cleaner"] },
   { id: "social-image-pack", slug: "social-image-pack", title: "SNS 이미지 세트", displaySpec: "1080×1080 · 1080×1350 · 1080×1920", workspaceKind: "social-pack", nextToolIds: ["youtube-thumbnail", "film-photo", "image-compressor"] },
+  { id: "instagram-profile-picture", slug: "instagram-profile-picture", title: "인스타그램 프로필 사진", displaySpec: "1080×1080px · 원형 프로필 미리보기", workspaceKind: "instagram-profile", nextToolIds: ["social-image-pack", "image-compressor", "photo-privacy-cleaner"] },
   { id: "youtube-thumbnail", slug: "youtube-thumbnail", title: "유튜브 썸네일", displaySpec: "3840×2160px · 16:9", workspaceKind: "youtube-thumbnail", nextToolIds: ["youtube-banner", "social-image-pack", "image-compressor"] },
   { id: "four-cut-photo", slug: "four-cut-photo", title: "네컷사진 만들기", displaySpec: "세로 1200×1800 · 가로 1800×1200", workspaceKind: "four-cut", nextToolIds: ["film-photo", "social-image-pack", "image-compressor"] },
-  { id: "film-photo", slug: "film-photo", title: "필름사진 효과", displaySpec: "결정적 로컬 필터 · JPG/PNG", workspaceKind: "film", nextToolIds: ["four-cut-photo", "social-image-pack", "image-compressor"] },
+  { id: "film-photo", slug: "film-photo", title: "필름사진 효과", displaySpec: "로컬 필름 효과 · JPG/PNG", workspaceKind: "film", nextToolIds: ["four-cut-photo", "social-image-pack", "image-compressor"] },
 ] as const satisfies readonly ClientToolNavigation[];
 
 const clientToolById = new Map<string, ClientToolNavigation>(clientTools.map((tool) => [tool.id, tool]));
@@ -51,6 +55,7 @@ export type ToolCardSummary = {
   shortDescription: string;
   displaySpec: string;
   sourceKind: "official" | "convention";
+  badgeKind: ToolBadgeKind;
 };
 
 export type ToolSearchSummary = ToolCardSummary & {
@@ -80,6 +85,7 @@ export function toToolCardSummary(tool: ToolCardSource): ToolCardSummary {
     shortDescription: tool.shortDescription,
     displaySpec: tool.displaySpec,
     sourceKind: tool.sourceKind,
+    badgeKind: tool.badgeKind,
   };
 }
 

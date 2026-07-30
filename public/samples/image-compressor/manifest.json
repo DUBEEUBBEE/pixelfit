@@ -1,0 +1,34 @@
+{
+  "original": {
+    "width": 1200,
+    "height": 800,
+    "actualBytes": 1045528,
+    "format": "PNG",
+    "targetBytes": null,
+    "downscaled": false
+  },
+  "target-500kb": {
+    "width": 1200,
+    "height": 800,
+    "actualBytes": 279843,
+    "format": "PNG",
+    "targetBytes": 512000,
+    "downscaled": false
+  },
+  "target-200kb": {
+    "width": 1200,
+    "height": 800,
+    "actualBytes": 110060,
+    "format": "PNG",
+    "targetBytes": 204800,
+    "downscaled": false
+  },
+  "target-100kb-downscaled": {
+    "width": 900,
+    "height": 600,
+    "actualBytes": 34154,
+    "format": "PNG",
+    "targetBytes": 102400,
+    "downscaled": true
+  }
+}

@@ -50,7 +50,7 @@ export function UtilityWorkspace({ presetId }: { presetId: string }) {
 }
 
 function CompressorWorkspace() {
-  const image = useUtilityImage();
+  const image = useUtilityImage({ retainBytes: false });
   const generated = useUtilityResult();
   const processor = useUtilityProcessor();
   const [step, setStep] = useState<Step>(1);
@@ -180,7 +180,7 @@ function CompressorWorkspace() {
 }
 
 function ResizerWorkspace() {
-  const image = useUtilityImage();
+  const image = useUtilityImage({ retainBytes: false });
   const generated = useUtilityResult();
   const processor = useUtilityProcessor();
   const [step, setStep] = useState<Step>(1);
@@ -240,6 +240,15 @@ function ResizerWorkspace() {
     setHeight(next);
     if (ratioLocked && sourceDimensions) setWidth(Math.max(1, Math.round(next * sourceDimensions.width / sourceDimensions.height)));
   };
+  const changeRatioLocked = (next: boolean) => {
+    setRatioLocked(next);
+    if (!next || !sourceDimensions) return;
+    if (anchor === "height") {
+      setWidth(Math.max(1, Math.round(height * sourceDimensions.width / sourceDimensions.height)));
+      return;
+    }
+    setHeight(Math.max(1, Math.round(width * sourceDimensions.height / sourceDimensions.width)));
+  };
 
   const createResult = async () => {
     const asset = image.asset;
@@ -272,7 +281,7 @@ function ResizerWorkspace() {
         { label: "결과 용량", value: formatBytes(result.blob.size) },
         { label: "파일 형식", value: formatLabel(result.format) },
         { label: "맞춤 방식", value: fit === "contain" ? "전체 포함" : "빈틈없이 채움" },
-        { label: "실제 파일", value: "서명·MIME·픽셀 재검사 완료" },
+        { label: "실제 파일", value: "형식·가로·세로 크기 확인 완료" },
       ],
     });
     setStep(3);
@@ -301,9 +310,9 @@ function ResizerWorkspace() {
                 <NumberField id="resize-width" label="가로(px)" value={width} onChange={changeWidth} />
                 <NumberField id="resize-height" label="세로(px)" value={height} onChange={changeHeight} />
               </div>
-              <label className="metadata-option" style={{ marginTop: ".65rem" }}><input type="checkbox" checked={ratioLocked} onChange={(event) => setRatioLocked(event.target.checked)} /><span><strong>원본 비율 잠금</strong><span>기본값으로 비율 왜곡을 막습니다.</span></span></label>
+              <label className="metadata-option" style={{ marginTop: ".65rem" }}><input type="checkbox" checked={ratioLocked} onChange={(event) => changeRatioLocked(event.target.checked)} /><span><strong>원본 비율 잠금</strong><span>기본값으로 비율 왜곡을 막습니다.</span></span></label>
               <div className="format-row" style={{ flexWrap: "wrap", marginTop: ".65rem" }}>
-                {[{ w: 640, h: 480 }, { w: 1080, h: 1080 }, { w: 1920, h: 1080 }].map((size) => <button className="button secondary" type="button" key={`${size.w}x${size.h}`} onClick={() => { setWidth(size.w); setHeight(size.h); setRatioLocked(false); }}>{size.w}×{size.h}</button>)}
+                {[{ w: 640, h: 480 }, { w: 1080, h: 1080 }, { w: 1920, h: 1080 }].map((size) => <button className="button secondary" type="button" key={`${size.w}x${size.h}`} onClick={() => { setAnchor("width"); setWidth(size.w); setHeight(size.h); setRatioLocked(false); }}>{size.w}×{size.h}</button>)}
               </div>
             </>}
             {mode === "long-edge" && <NumberField id="resize-long-edge" label="긴 변(px)" value={longEdge} onChange={setLongEdge} />}
@@ -336,7 +345,7 @@ function ResizerWorkspace() {
 }
 
 function ConverterWorkspace() {
-  const image = useUtilityImage();
+  const image = useUtilityImage({ retainBytes: true });
   const generated = useUtilityResult();
   const processor = useUtilityProcessor();
   const [step, setStep] = useState<Step>(1);
@@ -401,7 +410,7 @@ function ConverterWorkspace() {
       {step === 1 && <UploadPanel onFile={choose} error={image.error} busy={image.busy} />}
       {step === 2 && image.asset && (
         <EditorLayout asset={image.asset} previewLabel="형식을 변환할 원본 사진">
-          <div className="success-box"><Check size={18} aria-hidden="true" /><div>실제 파일 서명으로 확인한 입력 형식: <strong>{formatLabel(image.asset.format)}</strong> · {image.asset.decoded.width}×{image.asset.decoded.height}px · {formatBytes(image.asset.file.size)}</div></div>
+          <div className="success-box"><Check size={18} aria-hidden="true" /><div>실제 파일 내용으로 확인한 입력 형식: <strong>{formatLabel(image.asset.format)}</strong> · {image.asset.decoded.width}×{image.asset.decoded.height}px · {formatBytes(image.asset.file.size)}</div></div>
           <OutputFormatPicker value={format} onChange={changeFormat} />
           {format !== "png" && <QualityControl id="converter-quality" value={quality} onChange={setQuality} />}
           {format === "jpeg" && <ColorControl id="converter-background" value={backgroundColor} onChange={setBackgroundColor} label="투명 영역의 JPEG 배경색" />}
@@ -409,11 +418,11 @@ function ConverterWorkspace() {
           <div className="control-card">
             <h3>메타데이터 처리</h3>
             <div className="metadata-grid">
-              <label className="metadata-option"><input type="radio" name="converter-metadata" checked={metadataPolicy === "remove"} onChange={() => setMetadataPolicy("remove")} /><span><strong>개인정보성 메타데이터 제거 (기본)</strong><span>Canvas로 다시 인코딩하고 결과를 재검사합니다.</span></span></label>
+              <label className="metadata-option"><input type="radio" name="converter-metadata" checked={metadataPolicy === "remove"} onChange={() => setMetadataPolicy("remove")} /><span><strong>개인정보성 촬영 정보 제거 (기본)</strong><span>선택한 형식의 새 파일로 저장한 뒤 결과를 다시 확인합니다.</span></span></label>
               <label className="metadata-option" aria-disabled={!preserveAvailable}><input type="radio" name="converter-metadata" checked={metadataPolicy === "preserve-exact"} disabled={!preserveAvailable} onChange={() => setMetadataPolicy("preserve-exact")} /><span><strong>원본 바이트 그대로 보존</strong><span>{preserveAvailable ? "같은 형식일 때만 가능하며 품질은 바뀌지 않습니다." : "다른 형식 사이에서는 정확한 보존을 지원하지 않습니다."}</span></span></label>
             </div>
           </div>
-          <div className="info-box"><LockKeyhole size={18} aria-hidden="true" /><div>HEIC은 안정적인 브라우저 로컬 디코더를 검증하지 않아 지원하지 않습니다. 외부 변환 서버도 사용하지 않습니다.</div></div>
+          <div className="info-box"><LockKeyhole size={18} aria-hidden="true" /><div>HEIC은 기기 안에서 안전하게 읽는 방법을 아직 검증하지 못해 지원하지 않습니다. 외부 변환 서버도 사용하지 않습니다.</div></div>
           <ProcessingState {...processor} />
           <div className="editor-actions"><button className="button ghost" type="button" onClick={reset}>다른 사진 선택</button><button className="button primary" type="button" disabled={processor.busy} onClick={() => void createResult()}>{formatLabel(format)} 파일 만들기</button></div>
         </EditorLayout>

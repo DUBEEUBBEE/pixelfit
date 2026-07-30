@@ -1,11 +1,11 @@
 # 픽셀핏 제품 명세
 
-기준일: 2026-07-24
+기준일: 2026-07-30
 
 ## 1. 버전 경계
 
 - **공개 v1:** 2026-07-22 GitHub Pages에 배포된 기존 6개 도구 버전
-- **로컬 v2 custom-domain 후보:** 총 13개 도구와 8개 가이드, 중앙 환경설정, 자체 OG PNG, 같은 사진 전달, Search Console URL-prefix meta와 분리된 AdSense 계정 확인/광고 게이트를 포함한 현재 작업 트리
+- **현재 로컬 후보:** 공개 v2의 13개 도구에 인스타그램 프로필 사진을 더한 총 14개 도구와 8개 가이드, 중앙 환경설정, 자체 OG PNG, 같은 사진 전달, Search Console URL-prefix meta와 분리된 AdSense 계정 확인/광고 게이트를 포함한 작업 트리
 
 이 명세는 v2 후보의 목표와 계약이다. 기능이 문서에 있다고 해서 빌드·E2E·접근성·배포가 완료된 것은 아니다. 공개 v1의 성공 기록을 v2 후보에 재사용하지 않으며 실제 상태는 [STATUS.md](./STATUS.md)를 따른다.
 
@@ -43,7 +43,7 @@
 
 ## 4. 정보 구조
 
-- 홈 `/`: 검색, 카테고리, 13개 도구 진입
+- 홈 `/`: 검색, 카테고리, 14개 도구 진입
 - 도구 `/[tool]`: 편집기, 결과, 규격 설명, 출처·면책, visible FAQ, 관련 가이드와 다음 도구
 - 가이드 `/guide`: 8개 가이드 인덱스
 - 가이드 `/guide/[slug]`: 문제 중심 설명, 계산/조건 예시, 도구 CTA
@@ -63,7 +63,7 @@
 | 파비콘 패키지 | `/favicon-maker` | ICO·PNG·manifest·안내문 ZIP | 검색 파비콘 기준 + 제품 호환 구성 |
 | 사진 개인정보 정리 | `/photo-privacy-cleaner` | JPEG/PNG/WebP metadata 정리 | 제품 개인정보 정책 |
 
-### 5.2 v2 후보 추가 도구 7개
+### 5.2 추가 도구 8개
 
 | 도구 | 경로 | 결과 계약 | 출처 경계 |
 | --- | --- | --- | --- |
@@ -71,6 +71,7 @@
 | 이미지 크기 조절 | `/image-resizer` | 직접 픽셀·긴 변·퍼센트 | 제품 기능값 |
 | 이미지 형식 변환 | `/image-converter` | JPEG/PNG/WebP | 브라우저 구현 범위 |
 | SNS 이미지 세트 | `/social-image-pack` | 1:1·4:5·9:16 개별/ZIP | 픽셀핏 서비스 preset |
+| 인스타그램 프로필 사진 | `/instagram-profile-picture` | 1080×1080 PNG/JPEG, 작은 원 안의 contain 배치와 색 테두리 | 픽셀핏 서비스 preset; Instagram 의무 픽셀값 아님 |
 | YouTube 썸네일 | `/youtube-thumbnail` | 3840×2160, 16:9 | YouTube 최신 공식 권장값 |
 | 네컷사진 | `/four-cut-photo` | 세로 1200×1800 또는 가로 1800×1200 | 디지털 공유용 서비스값 |
 | 필름사진 | `/film-photo` | 결정적 로컬 필터 JPEG/PNG | 제품 효과값 |
@@ -138,6 +139,14 @@
 - 필요한 결과를 개별 또는 ZIP으로 다운로드한다.
 - 플랫폼별 실제 노출 영역이나 성과를 보장하지 않는다.
 
+### 인스타그램 프로필 사진
+
+- 1080×1080은 픽셀핏의 서비스 출력값이며 Instagram의 공식 의무 픽셀값으로 표시하지 않는다.
+- 원본 사진을 정사각형으로 잘라 채우지 않고 작은 원 안에 contain 방식으로 배치한다. 세로·가로 사진의 전체 구도를 보존하는 대신 원 안에 여백이 생길 수 있다.
+- 작은 원 크기, 사진 크기, 가로·세로 위치, 테두리 두께와 테두리·안쪽 원·바깥 캔버스 색을 조절한다.
+- 미리보기와 다운로드 파일은 같은 배치 계산을 사용하고 결과를 1080×1080 PNG 또는 JPEG로 다시 검사한다.
+- 실제 Instagram 앱의 원형 마스크, 리샘플링과 UI 겹침은 앱 버전·기기에 따라 달라질 수 있음을 표시한다.
+
 ### YouTube 썸네일
 
 - 최신 공식 권장 3840×2160, 16:9 JPEG/PNG를 만든다.
@@ -180,6 +189,9 @@
 - 모바일 우선, 한 화면에 명확한 주 행동
 - drag/drop과 명시적 파일 선택 버튼
 - 큰 preview, 터치/키보드 조작, reset과 처리 상태
+- 자체 sample gallery는 viewport 진입 전 이미지를 요청하지 않고, 진입 뒤 현재 route의 자산만 요청
+- 압축 비교 fixture는 480×320 thumbnail을 먼저 사용하고 1MB 이상일 수 있는 full PNG는 사용자가 원본 보기 링크를 눌렀을 때만 요청
+- 압축 sample은 실제 사용자 파일을 도구로 처리한 결과가 아니라 결정적 비교 fixture임을 화면에서 명시
 - 처리 중 `aria-busy`, 결과·오류 `aria-live`, visible focus
 - 색상만이 아닌 icon·상태명·본문으로 결과 전달
 - crop, 안전영역, 원형 preview의 텍스트 대안
@@ -227,18 +239,19 @@ AdSense 광고 제공은 기본 OFF다. `ADSENSE_ENABLED=true`, 유효한 publis
 
 계정 확인은 광고 제공과 분리한다. 유효한 실제 publisher client가 있으면 광고가 OFF여도 `google-adsense-account` meta와 custom-root `ads.txt`를 만들 수 있지만, 이는 계정·사이트 승인 또는 광고 요청을 뜻하지 않는다.
 
-기존 `pixelfit.o-r.kr`은 Public Suffix List에 등록된 플랫폼 하위 도메인이 아니라 `o-r.kr`의 일반 하위 도메인이며, 이 프로젝트는 상위 `o-r.kr/ads.txt`를 게시할 수 없어 AdSense 사이트 등록이 차단됐다. 새 후보 `pixelfit.me`의 DNS·공개 root `ads.txt`·AdSense 사이트 수락, CMP, 개인정보 동의와 철회는 코드만으로 완료되지 않는 외부 운영 항목이며, 이 준비가 끝나지 않으면 광고를 OFF로 유지한다.
+기존 `pixelfit.o-r.kr`은 `o-r.kr`의 일반 하위 도메인이며, 이 프로젝트는 상위 `o-r.kr/ads.txt`를 게시할 수 없어 AdSense 사이트 등록이 차단됐다. 현재 `pixelfit.me`의 DNS·HTTPS·공개 root `ads.txt` 소유권 확인과 AdSense 검토 요청은 완료됐지만 계정은 `준비 중`이다. CMP, 최종 승인, 개인정보 동의·철회와 실제 광고 제공을 검증하기 전에는 광고를 OFF로 유지한다.
 
 ## 12. SEO 제품 계약
 
 - 중앙 URL helper가 project Pages `/pixelfit`과 custom-domain root를 모두 지원
 - 홈·도구·가이드별 고유 metadata와 자체 1200×630 OG PNG
-- 홈 `WebSite`
+- 홈 `WebSite`와 사실 기반 일반 `WebApplication`
 - 가이드 허브 `ItemList`
-- 도구 `BreadcrumbList`
+- 도구 `BreadcrumbList`와 사실 기반 일반 `WebApplication`
 - 가이드 상세 `BreadcrumbList`/`Article`
 - 화면용 FAQ는 유지하되 `FAQPage` JSON-LD는 생성하지 않음
-- 실제 price·review·rating 근거가 없는 `WebApplication`/`SoftwareApplication` rich-result 표시 금지
+- 일반 `WebApplication`에는 실제 URL·설명·이미지·콘텐츠 수정일만 사용
+- 실제 price·review·rating 근거가 없으므로 `offers`/`review`/`aggregateRating` 및 `SoftwareApplication` rich-result 표시 금지
 - 가짜 review, rating, 사용자 수, 성과, 촬영일 또는 검증하지 않은 `dateModified` 금지
 - 유효한 Google token이 있을 때 Search Console URL-prefix HTML 확인 meta 생성
 - 유효한 Naver token이 있을 때만 verification meta 생성
@@ -250,7 +263,7 @@ Google token을 넣은 정적 HTML은 소유권 확인의 기술 전제일 뿐�
 static export인 `out/`을 사용한다. 두 환경을 각각 빌드·preview한다.
 
 - GitHub project Pages: 실제 canonical + `/pixelfit`
-- custom domain candidate: `pixelfit.me` HTTPS root canonical + 빈 base path
+- production custom domain: `pixelfit.me` HTTPS root canonical + 빈 base path
 
 GitHub Actions는 custom-root를 production 계약으로 사용하며 환경변수가 없으면 `pixelfit.me`를 명시적 기본값으로 선택한다. repository variable이 있으면 기본값보다 우선하므로 실제 전환 전에 새 호스트와 일치시킨다. project Pages `/pixelfit`은 회귀 build다. 공개 URL, 404·직접 새로고침·MIME·보안 header·DNS·TLS를 실제 환경에서 확인해야 배포 완료다. Actions가 `CNAME`만으로 Pages Settings와 인증서를 완료한다고 가정하지 않는다.
 
@@ -269,7 +282,7 @@ GitHub Actions는 custom-root를 production 계약으로 사용하며 환경변�
 
 v2 완료는 다음이 실제 증거와 함께 모두 충족될 때만 선언한다.
 
-- 13개 도구의 실제 다운로드와 결과 parse-back
+- 14개 도구의 실제 다운로드와 결과 parse-back
 - 8개 가이드·SEO route와 자체 OG PNG 검증
 - 같은 사진 전달, 저장소 부재와 이미지 network request 부재
 - 광고 OFF 안전성과, 광고를 켤 경우 별도 CMP·정책 검증
