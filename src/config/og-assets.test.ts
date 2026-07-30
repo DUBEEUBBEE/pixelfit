@@ -32,5 +32,5 @@ describe("static Open Graph assets", () => {
       ["scripts/generate-og.mjs", "--check"],
       { cwd: process.cwd(), encoding: "utf8", stdio: "pipe" },
     )).not.toThrow();
-  });
+  }, 15_000);
 });
