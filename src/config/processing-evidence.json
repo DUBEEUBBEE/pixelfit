@@ -1,0 +1,133 @@
+{
+  "measuredOn": "2026-10-12",
+  "browser": "149.0.7827.55",
+  "project": "chromium",
+  "platform": "darwin",
+  "arch": "arm64",
+  "records": [
+    {
+      "id": "compress-jpeg",
+      "inputBytes": 1045528,
+      "inputSha256": "e8ab8a17174ff226b8a69c06b8b76914b1b25edfabc6b880f42025ee858bd4d6",
+      "inputDimensions": {
+        "width": 1200,
+        "height": 800
+      },
+      "settings": "JPEG · 100KB(102,400B) · 축소 안 함",
+      "format": "jpeg",
+      "width": 1200,
+      "height": 800,
+      "bytes": 101737,
+      "outputSha256": "7506cb4ed7513d8b18d802dee933ab80de04af2f41d935d4ddb8c0f803576455",
+      "reachedTarget": true
+    },
+    {
+      "id": "compress-png",
+      "inputBytes": 1045528,
+      "inputSha256": "e8ab8a17174ff226b8a69c06b8b76914b1b25edfabc6b880f42025ee858bd4d6",
+      "inputDimensions": {
+        "width": 1200,
+        "height": 800
+      },
+      "settings": "PNG · 100KB(102,400B) · 축소 안 함",
+      "format": "png",
+      "width": 1200,
+      "height": 800,
+      "bytes": 1475820,
+      "outputSha256": "b4a3585b9bddedbd05eab8a4e36bebcd497967a2c57fa35c882c6a1d98341b8d",
+      "reachedTarget": false
+    },
+    {
+      "id": "resize-half",
+      "inputBytes": 1045528,
+      "inputSha256": "e8ab8a17174ff226b8a69c06b8b76914b1b25edfabc6b880f42025ee858bd4d6",
+      "inputDimensions": {
+        "width": 1200,
+        "height": 800
+      },
+      "settings": "50% · PNG · 전체 포함",
+      "format": "png",
+      "width": 600,
+      "height": 400,
+      "bytes": 506342,
+      "outputSha256": "2dfe7b7f665a031f16358036b2a8bd8d1781d7c86d06a2bd5dfa0ad917a07155"
+    },
+    {
+      "id": "convert-jpeg",
+      "inputBytes": 1045528,
+      "inputSha256": "e8ab8a17174ff226b8a69c06b8b76914b1b25edfabc6b880f42025ee858bd4d6",
+      "inputDimensions": {
+        "width": 1200,
+        "height": 800
+      },
+      "settings": "JPEG · 품질 90% · 촬영 정보 제외",
+      "format": "jpeg",
+      "width": 1200,
+      "height": 800,
+      "bytes": 284236,
+      "outputSha256": "16db79b94cbbb0daff07c9ce674fd58d06a0cd9eca40176f3710d3b05df4deaa"
+    },
+    {
+      "id": "convert-png",
+      "inputBytes": 1045528,
+      "inputSha256": "e8ab8a17174ff226b8a69c06b8b76914b1b25edfabc6b880f42025ee858bd4d6",
+      "inputDimensions": {
+        "width": 1200,
+        "height": 800
+      },
+      "settings": "PNG · 품질값 없음 · 촬영 정보 제외",
+      "format": "png",
+      "width": 1200,
+      "height": 800,
+      "bytes": 1475820,
+      "outputSha256": "b4a3585b9bddedbd05eab8a4e36bebcd497967a2c57fa35c882c6a1d98341b8d"
+    },
+    {
+      "id": "convert-webp",
+      "inputBytes": 1045528,
+      "inputSha256": "e8ab8a17174ff226b8a69c06b8b76914b1b25edfabc6b880f42025ee858bd4d6",
+      "inputDimensions": {
+        "width": 1200,
+        "height": 800
+      },
+      "settings": "WEBP · 품질 90% · 촬영 정보 제외",
+      "format": "webp",
+      "width": 1200,
+      "height": 800,
+      "bytes": 274514,
+      "outputSha256": "8300d882182f9c3612b1cf5c771deae5d94e5a3bc2dc36c7f64c802e7e7b4a72"
+    },
+    {
+      "id": "privacy-png",
+      "inputBytes": 3008,
+      "inputSha256": "ac407aea8ab9d1ea70a6d460e203b65f73a3ad7f0a94dfe685fb30ed37c4b00d",
+      "inputDimensions": {
+        "width": 320,
+        "height": 400
+      },
+      "settings": "PNG · 작성자·설명·편집 프로그램 기본 선택 제거",
+      "format": "png",
+      "width": 320,
+      "height": 400,
+      "bytes": 2896,
+      "outputSha256": "c976c4ebdb59a9cf3ec50d18c95fa93c2eca6eb1c9aec3e9452b1422fc11e41f",
+      "imageDataPreserved": true,
+      "removedSyntheticFields": 3
+    },
+    {
+      "id": "passport-jpeg",
+      "inputBytes": 6888,
+      "inputSha256": "52f23e81a31768ba7ef9f6f3d1239a607285eb52ffaad23053b6e02f7ad8cf3a",
+      "inputDimensions": {
+        "width": 640,
+        "height": 800
+      },
+      "settings": "자체 도형 PNG · 초기 크롭 · JPG 출력",
+      "format": "jpeg",
+      "width": 413,
+      "height": 531,
+      "bytes": 4331,
+      "outputSha256": "5f7152eb1e0da331bb1d9ecfb74be7256c35aa5c6b08999f2bf1fc390d494476"
+    }
+  ]
+}

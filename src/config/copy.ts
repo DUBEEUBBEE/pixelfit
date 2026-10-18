@@ -1,7 +1,7 @@
 export const copy = {
   hero: {
     eyebrow: "어려운 규격은 픽셀핏에게",
-    title: "용도를 고르고\n사진만 올리세요.",
+    title: "사진 용량 줄이기\n크기·형식 조절.",
     description: "용량·픽셀·비율·형식부터 SNS와 공식 사진 규격까지 한곳에서 확인합니다.",
     privacy: "사진은 이 기기 안에서 처리됩니다.",
   },

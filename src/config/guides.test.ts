@@ -54,7 +54,7 @@ describe("guide registry", () => {
 
     for (const guide of guides) {
       expect(guide.seo.contentPublishedAt).toBe("2026-07-23");
-      expect(guide.seo.contentUpdatedAt).toBe("2026-07-26");
+      expect(guide.seo.contentUpdatedAt).toBe(["passport-photo-413x531", "jpeg-png-webp"].includes(guide.slug) ? "2026-10-12" : "2026-07-26");
     }
   });
 
