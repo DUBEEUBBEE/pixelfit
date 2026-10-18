@@ -23,7 +23,8 @@ describe("ToolSearch", () => {
     expect(allTools).not.toHaveAttribute("open");
     await user.click(screen.getByText("전체 도구 14개 보기"));
     expect(allTools).toHaveAttribute("open");
-    expect(within(allTools as HTMLElement).getAllByRole("article")).toHaveLength(14);
+    expect(within(allTools as HTMLElement).getAllByRole("link")).toHaveLength(14);
+    expect(within(allTools as HTMLElement).queryAllByRole("article")).toHaveLength(0);
   });
 
   it("filters by Korean search terms", async () => {

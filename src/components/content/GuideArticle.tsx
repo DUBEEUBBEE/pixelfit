@@ -4,6 +4,7 @@ import { brand, publicUrl } from "@/config/brand";
 import { getGuide, type GuideDefinition } from "@/config/guides";
 import { buildOrganizationStructuredData } from "@/config/organization";
 import { AdSlot } from "@/components/ads";
+import { ProcessingEvidence } from "./ProcessingEvidence";
 
 function jsonLd(value: unknown): string {
   return JSON.stringify(value).replace(/</g, "\\u003c");
@@ -44,9 +45,8 @@ function guideStructuredData(guide: GuideDefinition) {
       author,
       publisher: buildOrganizationStructuredData(),
       inLanguage: "ko-KR",
-      proficiencyLevel: "Beginner",
       keywords: guide.keywords.join(", "),
-      citation: guide.source.url,
+      citation: guide.additionalSources?.length ? [guide.source.url, ...guide.additionalSources.map((source) => source.url)] : guide.source.url,
       isPartOf: { "@type": "WebSite", name: brand.name, url: publicUrl("/") },
     },
   };
@@ -91,6 +91,7 @@ export function GuideArticle({ guide }: { guide: GuideDefinition }) {
               <li><a href="#problem-situation">이런 상황에서 필요합니다</a></li>
               {guide.sections.map((section) => <li key={section.id}><a href={`#${section.id}`}>{section.title}</a></li>)}
               <li><a href="#worked-example">{guide.example.title}</a></li>
+              {guide.slug === "jpeg-png-webp" && <li><a href="#format-measurements">같은 원본의 실제 측정 비교</a></li>}
               <li><a href="#source-record">출처와 확인일</a></li>
             </ol>
           </nav>
@@ -110,7 +111,7 @@ export function GuideArticle({ guide }: { guide: GuideDefinition }) {
 
           <section id="worked-example" aria-labelledby="worked-example-title">
             <h2 id="worked-example-title">{guide.example.title}</h2>
-            <div style={{ maxWidth: "100%", overflowX: "auto", border: "1px solid #dfe5e8", borderRadius: "16px", background: "#fff" }}>
+            <div role="region" aria-label={`${guide.example.title} 표`} tabIndex={0} style={{ maxWidth: "100%", overflowX: "auto", border: "1px solid #dfe5e8", borderRadius: "16px", background: "#fff" }}>
               <table style={{ width: "100%", minWidth: "660px", borderCollapse: "collapse", fontSize: ".9rem" }}>
                 <caption style={{ textAlign: "left", padding: "1rem", color: "#4f5e72", borderBottom: "1px solid #dfe5e8" }}>{guide.example.caption}</caption>
                 <thead>
@@ -132,6 +133,8 @@ export function GuideArticle({ guide }: { guide: GuideDefinition }) {
           </section>
 
           <AdSlot placement="guide-content-break" />
+
+          {guide.slug === "jpeg-png-webp" && <div id="format-measurements"><ProcessingEvidence context={guide.slug} /></div>}
 
           <section aria-labelledby="guide-tools-title">
             <h2 id="guide-tools-title">사진을 기기 안에서 바로 처리하기</h2>
@@ -155,6 +158,7 @@ export function GuideArticle({ guide }: { guide: GuideDefinition }) {
               출처 확인일 <time dateTime={guide.source.lastVerifiedAt}>{guide.source.lastVerifiedAt}</time><br />
               <a href={guide.source.url} target="_blank" rel="noreferrer">원문에서 최신 내용 확인 <ExternalLink size={13} aria-hidden="true" style={{ display: "inline" }} /></a>
             </div>
+            {guide.additionalSources?.map((source) => <p key={source.url}><a href={source.url} target="_blank" rel="noreferrer">{source.title}</a> · 출처 확인 <time dateTime={source.lastVerifiedAt}>{source.lastVerifiedAt}</time></p>)}
             <p>출처 확인일은 외부 문서를 마지막으로 확인한 날짜이고, 내용 업데이트일은 이 가이드 본문을 실제로 수정한 날짜입니다. 두 날짜가 같더라도 의미는 다릅니다.</p>
           </section>
         </article>

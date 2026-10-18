@@ -16,7 +16,7 @@ const rawPresets = [
     sourceKind: "official",
     output: { width: 413, height: 531, dpi: 300, formats: ["jpeg"], maxBytes: 500 * 1024, physicalLabel: "3.5 × 4.5cm 기준" },
     input: commonInput,
-    source: { authority: "대한민국 외교부", title: "온라인용 사진파일 안내", url: "https://www.passport.go.kr/home/kor/contents.do?menuPos=12", lastVerifiedAt: checkedAt },
+    source: { authority: "대한민국 외교부", title: "온라인용 사진파일 안내", url: "https://www.passport.go.kr/home/kor/contents.do?menuPos=12", lastVerifiedAt: "2026-10-12" },
     allowedOperations: ["rotate", "crop", "resize", "compress", "face-detect"],
     forbiddenOperations: ["background-remove", "background-replace", "retouch", "generative-fill"],
     compliance: { approvalGuaranteed: false, disclaimer: "자동 검사는 참고용이며 실제 여권 발급 심사 결과와 다를 수 있습니다." },

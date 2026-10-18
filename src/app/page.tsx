@@ -8,7 +8,7 @@ import { homeCategories, tools } from "@/config/tools";
 import { brand, publicUrl } from "@/config/brand";
 import { AdSlot } from "@/components/ads";
 
-const homeTitle = "이미지 크기·용량·사진 규격 자동 맞춤 | 픽셀핏";
+const homeTitle = "사진 용량 줄이기·이미지 크기 조절·형식 변환 | 픽셀핏";
 const homeDescription = "사진 압축, 크기 조절, JPG·PNG·WebP 변환, SNS 이미지, 공식 사진 규격과 개인정보 정리를 브라우저에서 처리합니다.";
 const homeImage = publicUrl("/og/home.png");
 

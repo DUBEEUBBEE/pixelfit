@@ -310,7 +310,7 @@ function ResizerWorkspace() {
                 <NumberField id="resize-width" label="가로(px)" value={width} onChange={changeWidth} />
                 <NumberField id="resize-height" label="세로(px)" value={height} onChange={changeHeight} />
               </div>
-              <label className="metadata-option" style={{ marginTop: ".65rem" }}><input type="checkbox" checked={ratioLocked} onChange={(event) => changeRatioLocked(event.target.checked)} /><span><strong>원본 비율 잠금</strong><span>기본값으로 비율 왜곡을 막습니다.</span></span></label>
+              <label className="metadata-option" style={{ marginTop: ".65rem" }}><input type="checkbox" checked={ratioLocked} onChange={(event) => changeRatioLocked(event.target.checked)} /><span><strong>원본 비율 잠금</strong><span>한쪽 치수를 바꾸면 다른 쪽도 계산합니다. 잠금을 풀면 지정한 상자에 여백을 넣거나 가장자리를 자릅니다.</span></span></label>
               <div className="format-row" style={{ flexWrap: "wrap", marginTop: ".65rem" }}>
                 {[{ w: 640, h: 480 }, { w: 1080, h: 1080 }, { w: 1920, h: 1080 }].map((size) => <button className="button secondary" type="button" key={`${size.w}x${size.h}`} onClick={() => { setAnchor("width"); setWidth(size.w); setHeight(size.h); setRatioLocked(false); }}>{size.w}×{size.h}</button>)}
               </div>

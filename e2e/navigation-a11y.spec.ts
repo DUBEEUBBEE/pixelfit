@@ -31,7 +31,7 @@ const guideRoutes = [
   ["/guide/jpeg-png-webp", "JPEG·PNG·WebP, 어떤 형식을 고를까"],
 ] as const;
 
-const heroTitle = "용도를 고르고\n사진만 올리세요.";
+const heroTitle = "사진 용량 줄이기\n크기·형식 조절.";
 
 async function expectNoSeriousAxeViolations(page: Page, context: string) {
   const results = await new AxeBuilder({ page }).analyze();
@@ -41,7 +41,7 @@ async function expectNoSeriousAxeViolations(page: Page, context: string) {
 
 test("홈 검색과 모든 도구 경로가 연결된다", async ({ page }) => {
   await page.goto("/");
-  await expect(page.getByRole("heading", { name: "용도를 고르고 사진만 올리세요." })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "사진 용량 줄이기 크기·형식 조절." })).toBeVisible();
   await expect(page.getByRole("region", { name: "자주 쓰는 도구" }).getByRole("article")).toHaveCount(4);
   await page.getByRole("button", { name: "JPG 변환" }).click();
   await expect(page.getByLabel("도구 검색")).toHaveValue("JPG 변환");
@@ -51,7 +51,7 @@ test("홈 검색과 모든 도구 경로가 연결된다", async ({ page }) => {
   await expect(page.getByRole("region", { name: "공식 사진" }).getByRole("article")).toHaveCount(3);
   await page.getByText("전체 도구 14개 보기").click();
   await expect(page.locator("#all-tools")).toHaveAttribute("open", "");
-  await expect(page.locator("#all-tools").getByRole("article")).toHaveCount(14);
+  await expect(page.locator("#all-tools").getByRole("link")).toHaveCount(14);
   await page.getByLabel("도구 검색").fill("위치정보");
   await expect(page.getByRole("heading", { name: /사진 개인정보/ })).toBeVisible();
   await page.getByLabel("도구 검색").fill("없는도구");
@@ -137,7 +137,7 @@ test("홈 제목은 데스크톱과 모바일에서 지정한 두 줄로만 보�
       };
     });
 
-    expect(titleGeometry.lines, `${viewport.width}px 시각적 줄`).toEqual(["용도를 고르고", "사진만 올리세요."]);
+    expect(titleGeometry.lines, `${viewport.width}px 시각적 줄`).toEqual(["사진 용량 줄이기", "크기·형식 조절."]);
     expect(titleGeometry.elementInsideViewport, `${viewport.width}px 제목 화면 경계`).toBe(true);
     expect(titleGeometry.elementHasNoHorizontalOverflow, `${viewport.width}px 제목 오버플로`).toBe(true);
     expect(titleGeometry.documentHasNoHorizontalOverflow, `${viewport.width}px 문서 오버플로`).toBe(true);
@@ -218,6 +218,18 @@ test("가이드 허브와 8개 상세 가이드가 정적으로 연결된다", a
     await expect(page.getByRole("heading", { level: 1, name: heading })).toBeVisible();
     await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", new RegExp(`${route}/$`));
     await expect(page.locator('meta[property="og:image"]')).toHaveAttribute("content", /\/og\/guides\/[a-z0-9-]+\.png$/);
+    // Mobile layout must not expand to the table's intrinsic 660px width.
+    const viewportWidth = page.viewportSize()!.width;
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(viewportWidth + 1);
+    const article = await page.locator("article.prose").boundingBox();
+    expect(article!.x + article!.width).toBeLessThanOrEqual(viewportWidth + 1);
+    const exampleTable = page.locator('#worked-example > [role="region"]');
+    await expect(exampleTable).toHaveAttribute("tabindex", "0");
+    if (await exampleTable.evaluate((element) => element.scrollWidth > element.clientWidth)) {
+      await exampleTable.focus();
+      await exampleTable.press("ArrowRight", { delay: 200 });
+      await expect.poll(() => exampleTable.evaluate((element) => element.scrollLeft)).toBeGreaterThan(0);
+    }
     await page.goto("/guide");
     await page.waitForLoadState("networkidle");
   }
@@ -276,8 +288,8 @@ test("자체 제작 샘플은 스크롤 전 요청되지 않고 카드 안에서
   }
 });
 
-test("@a11y 홈과 14개 도구의 초기 상태에 심각한 접근성 위반이 없다", async ({ page }) => {
-  for (const route of ["/", ...toolRoutes.map(([toolRoute]) => toolRoute), "/guide", "/guide/exif-photo-privacy"]) {
+test("@a11y 공개 28개 페이지의 초기 상태에 심각한 접근성 위반이 없다", async ({ page }) => {
+  for (const route of ["/", ...toolRoutes.map(([toolRoute]) => toolRoute), "/guide", ...guideRoutes.map(([guideRoute]) => guideRoute), "/about", "/contact", "/privacy", "/terms"]) {
     await page.goto(route);
     await expectNoSeriousAxeViolations(page, route);
   }

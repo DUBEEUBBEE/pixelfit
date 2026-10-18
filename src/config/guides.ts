@@ -32,6 +32,7 @@ export type GuideDefinition = {
     url: string;
     lastVerifiedAt: string;
   };
+  additionalSources?: readonly { title: string; url: string; lastVerifiedAt: string }[];
   sections: readonly GuideSection[];
   example: GuideExampleTable;
   toolCtas: readonly { href: string; label: string; description: string }[];
@@ -53,13 +54,13 @@ export const guides = [
       description: "온라인 여권사진을 413×531px JPEG·500KB 이하로 준비하는 계산, 사진 자르기, 용량 확인 순서를 공식 기준과 함께 설명합니다.",
       ogImage: "/og/guides/passport-photo-413x531.png",
       contentPublishedAt: "2026-07-23",
-      contentUpdatedAt: "2026-07-26",
+      contentUpdatedAt: "2026-10-12",
     },
     source: {
       authority: "대한민국 외교부 여권안내",
       title: "온라인용 사진파일 안내",
       url: "https://www.passport.go.kr/home/kor/contents.do?menuPos=12",
-      lastVerifiedAt,
+      lastVerifiedAt: "2026-10-12",
     },
     sections: [
       {
@@ -84,7 +85,8 @@ export const guides = [
         id: "export-check",
         title: "내려받은 파일을 다시 확인하기",
         paragraphs: [
-          "결과를 만든 뒤 화면의 예상값이 아니라 내려받은 파일의 가로·세로 픽셀과 실제 용량을 확인해야 합니다. 픽셀핏은 500KB를 512,000바이트로 계산하며, 이를 넘으면 JPEG 품질을 조금 낮춰 새 파일로 저장합니다.",
+          "결과를 만든 뒤 내려받은 파일의 실제 픽셀과 용량을 확인합니다. 외교부 안내는 500KB 이하라고 명시하지만 바이트 환산 방식은 명시하지 않습니다. 픽셀핏의 512,000바이트 기준은 1KB=1,024바이트로 계산한 제품 설정입니다.",
+          "제출 화면에서 용량 오류가 나면 압축 도구에서 JPG·480KB·해상도 축소 안 함으로 다시 저장할 수 있습니다. 480×1,024=491,520바이트로 500,000바이트보다도 작으며, 정해진 413×531px은 유지해야 합니다.",
           "최종 파일은 원본을 덮어쓰지 않는 새 이름으로 저장하고, 제출 직전 외교부 안내가 바뀌지 않았는지 다시 확인하세요.",
         ],
       },
@@ -96,7 +98,7 @@ export const guides = [
       rows: [
         ["픽셀", "413×531px", "내려받은 파일을 다시 읽음", "두 값이 정확히 일치"],
         ["파일 형식", "JPEG", "파일을 열어 실제 형식 확인", "이름만 .jpg로 바꾼 파일은 제외"],
-        ["파일 용량", "512,000B 이하", "내려받은 파일의 실제 용량 확인", "512,001B이면 다시 압축"],
+        ["파일 용량", "도구 기준 512,000B 이하", "제출처 단위와 실제 바이트 확인", "오류 시 480KB로 여유 확보"],
       ],
     },
     toolCtas: [{ href: "/passport-photo", label: "여권사진 도구 열기", description: "원본 배경을 유지하며 413×531px JPEG를 기기 안에서 만듭니다." }],
@@ -475,14 +477,15 @@ export const guides = [
       description: "사진·투명 이미지·스크린샷·웹 배포에서 JPEG, PNG, WebP의 손실 압축, 투명도, 용량, 호환성을 비교합니다.",
       ogImage: "/og/guides/jpeg-png-webp.png",
       contentPublishedAt: "2026-07-23",
-      contentUpdatedAt: "2026-07-26",
+      contentUpdatedAt: "2026-10-12",
     },
     source: {
       authority: "MDN Web Docs",
       title: "Image file type and format guide",
       url: "https://developer.mozilla.org/en-US/docs/Web/Media/Guides/Formats/Image_types",
-      lastVerifiedAt,
+      lastVerifiedAt: "2026-10-12",
     },
+    additionalSources: [{ title: "MDN — 브라우저 이미지 저장 형식과 품질 설정", url: "https://developer.mozilla.org/en-US/docs/Web/API/HTMLCanvasElement/toBlob", lastVerifiedAt: "2026-10-12" }],
     sections: [
       {
         id: "quick-choice",
@@ -509,6 +512,31 @@ export const guides = [
         ],
         bullets: ["사진과 높은 호환성: JPEG", "투명 로고·선명한 글자: PNG", "웹 용량 최적화와 투명도: WebP", "제출처 지원 형식이 항상 우선"],
       },
+      {
+        id: "repeatable-comparison",
+        title: "같은 원본으로 비교하는 네 단계",
+        paragraphs: [
+          "아래 실제 측정 표의 자체 제작 원본 PNG를 내려받아 형식 변환 도구에서 선택합니다. 1200×800px을 유지한 채 JPG 품질 90%, PNG, WebP 품질 90%를 각각 저장합니다. PNG에는 품질값이 없습니다.",
+          "각 결과를 새로 열어 그라데이션, 작은 글자, 얇은 선을 100% 배율에서 비교하고 실제 바이트와 형식을 확인합니다. JPEG와 WebP의 90%는 서로 같은 화질을 보장하는 점수가 아니므로 파일 용량만으로 우열을 결정하지 마세요.",
+        ],
+        bullets: ["동일한 원본과 픽셀 유지", "출력마다 형식과 품질 기록", "다운로드 파일의 실제 용량·형식 확인", "글자·경계·투명도를 보고 사용할 파일 선택"],
+      },
+      {
+        id: "product-encoding",
+        title: "형식이 지원하는 기능과 이 도구의 저장 방식",
+        paragraphs: [
+          "WebP 규격은 무손실을 지원하지만 픽셀핏은 브라우저의 품질 설정으로 저장하며 별도 무손실 WebP 선택은 제공하지 않습니다. PNG를 저장해도 원본 파일의 색상 정보·촬영 정보까지 그대로 복사한다는 뜻은 아닙니다.",
+          "같은 PNG를 다시 저장했는데 더 커질 수도 있습니다. 원본의 압축 방식과 브라우저의 저장 방식이 다르기 때문입니다. 줄어든 파일을 원할 때는 원본도 함께 비교하고, 픽셀 크기 조절과 용량 압축을 별도 단계로 판단하세요.",
+        ],
+      },
+      {
+        id: "conversion-troubleshooting",
+        title: "변환이 끝나도 다시 확인해야 할 오류",
+        paragraphs: [
+          "투명 로고를 JPG로 바꾼 뒤 테두리가 어색하면 배경색을 실제 게시 위치와 맞추거나 PNG를 유지하세요. 파일 이름을 .jpg로 바꿔도 형식은 바뀌지 않습니다. 픽셀핏은 실제 저장된 형식이 요청과 다르면 성공으로 표시하지 않습니다.",
+          "브라우저에서 WebP 저장을 지원하지 않아 오류가 나면 JPG나 PNG를 선택하세요. 여러 장면이 있는 움직이는 이미지나 HEIC 변환을 완료했다고 간주하지 말고, 다운로드한 파일을 최종 사용처에서도 직접 열어보세요.",
+        ],
+      },
     ],
     example: {
       title: "사용 사례별 형식 선택",
@@ -520,7 +548,7 @@ export const guides = [
         ["글자 있는 스크린샷", "PNG", "경계 보존", "용량이 크면 WebP 비교"],
       ],
     },
-    toolCtas: [{ href: "/image-converter", label: "이미지 형식 변환 도구 열기", description: "JPEG·PNG·WebP를 선택하고 투명 영역의 배경을 직접 정합니다." }],
+    toolCtas: [{ href: "/image-converter", label: "이미지 형식 변환 도구 열기", description: "같은 원본에서 형식별 결과와 투명 영역의 배경을 비교합니다." }, { href: "/image-compressor", label: "용량 한도에 맞춰 압축하기", description: "형식을 정한 뒤 목표 KB를 설정하고 픽셀을 유지할지 선택합니다." }, { href: "/image-resizer", label: "필요한 픽셀부터 조절하기", description: "원본이 지나치게 크면 긴 변·퍼센트로 줄인 후 형식을 비교합니다." }],
     relatedGuideSlugs: ["photo-under-500kb", "favicon-files", "exif-photo-privacy"],
   },
 ] as const satisfies readonly GuideDefinition[];

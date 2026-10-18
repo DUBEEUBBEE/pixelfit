@@ -237,6 +237,7 @@ function inspectStructuredData(structuredData, canonical, openGraphImage, htmlLa
     }
 
     if (types.includes("Article")) {
+      check(!Object.hasOwn(item, "proficiencyLevel"), "Article에는 TechArticle 전용 proficiencyLevel 없음", `${htmlLabel}: Article의 proficiencyLevel은 지원되는 속성이 아닙니다.`);
       const author = item.author;
       check(
         topLevelJsonLdTypes(author).includes("Person")

@@ -132,9 +132,9 @@ export function ToolSearch({ presets, categories }: { presets: readonly ToolSear
             </summary>
             <div className="all-tools-panel">
               <p>필터를 사용하지 않아도 아래 링크에서 모든 도구를 열 수 있습니다.</p>
-              <div className="tool-grid">
-                {presets.map((preset) => <PresetCard key={preset.id} preset={preset} />)}
-              </div>
+              <ul className="tool-directory">
+                {presets.map((preset) => <li key={preset.id}><Link className="card-link" href={`/${preset.slug}`} prefetch={false}><span>{preset.title}</span><small>{preset.displaySpec}</small></Link></li>)}
+              </ul>
             </div>
           </details>
         </>

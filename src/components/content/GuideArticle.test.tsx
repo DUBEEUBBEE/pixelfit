@@ -41,6 +41,7 @@ describe("GuideArticle", () => {
       mainEntityOfPage: canonical,
     });
     expect(JSON.stringify(structuredData)).not.toContain("FAQPage");
+    expect(structuredData[1]).not.toHaveProperty("proficiencyLevel");
     expect(structuredData[1].dateModified).toBe(guide.seo.contentUpdatedAt);
     expect(structuredData[1].datePublished).toBe(guide.seo.contentPublishedAt);
     expect(structuredData[1].author.name).toBe(brand.operatorName);

@@ -1,8 +1,48 @@
 # 픽셀핏 상태
 
-스냅샷: 2026-07-30 KST
+스냅샷: 2026-10-13 KST
 
 이 문서는 공개 v1, 로컬 v2 RC, 공개 v2를 분리하고 실행한 검사만 `PASS`로 기록한다. 실기기 Safari처럼 실행하지 않은 항목은 `NOT_TESTED`로 남긴다.
+
+## 배포·AdSense 재심사 — 2026-10-13, `AUTH_BLOCKED`
+
+사용자가 개선본 배포와 재심사 신청까지 요청했다. 로컬 구현·검증은 완료됐으나 GitHub 커넥터가 쓰기를 HTTP 403 `Resource not accessible by integration`으로 거절했고 Git CLI와 브라우저에 사용 가능한 저장소 인증이 없어 원격 전달·CI·배포를 진행하지 못했다. 공개본 28 URL을 새로 확인했지만 아직 기존 본문이다. AdSense 계정의 현재 PixelFit 상태는 `주의 필요` / `가치가 별로 없는 콘텐츠`이며, 수정본 공개 전이라 문제 수정 확인 및 검토 요청은 제출하지 않았다. 광고는 OFF로 유지했다. 상세 근거와 재개 순서는 [배포·신청 기록](./RELEASE_2026-10-13.md)에 있다. 아래 10월 12일 기록은 그 날짜의 작업 트리와 실제 검사 결과를 설명한다.
+
+## SEO · AdSense 콘텐츠 개선 — 2026-10-12, `WORKTREE_ONLY`
+
+기준 소스 main `32ecfac`. 사용자가 전달한 저가치 콘텐츠 거절에 대응해 공개본을 읽기 전용으로 감사하고 로컬 코드를 수정했다. **커밋·푸시·배포, 계정·도메인·Search Console 변경, 광고 활성화는 하지 않았다.** 7월의 AdSense ‘준비 중’은 과거 기록이며 현재 계정 화면은 열람하지 않았다.
+
+공개 canonical 28개는 HTTP 200, 고유 title/description, H1 하나, index/follow, 정확한 canonical과 정적 설명을 제공했다. sitemap 누락·중복 및 HTML 내부의 미확인 페이지 링크는 없었고 OG 24개는 200/1200×630이었다. HTTPS·www·옛 도메인·GitHub Pages의 대표 리디렉션은 경로/쿼리를 보존했다. 없는 두 경로는 HTTP 404/noindex다. 실제 색인 수·Google 선택 canonical·soft 404 판정은 미확인이다.
+
+실제 수정은 홈 의도/반복 카드, 우선 도구 4개와 형식·여권 가이드의 근거/한계, Article 속성, JS OFF 안내, 재현된 모바일 숫자 입력 잘림 및 8개 가이드의 본문 너비/표 키보드 접근이다. 가이드/도구 수와 기존 URL, 엔진, 클라이언트 처리, 모든 기존 자산·생성기·배포 workflow를 보존했다.
+
+실제 UI 다운로드 8종을 Chromium 149.0.7827.55·macOS arm64에서 측정했다. PNG 1,045,528B는 JPEG 100KB 설정에서 101,737B, PNG 설정에서는 목표를 초과한 1,475,820B였다. 실패도 그대로 표시했다. WebKit 26.5의 JPEG는 109,798B로 목표 초과, WebP 출력 미지원 안내가 정상 동작했다. 합성 정보 3개를 넣은 PNG는 3,008→2,896B이며 IDAT가 같았다. 도형 여권 결과는 413×531 JPG 4,331B로 파일 조건만 검증했다.
+
+| 검사 | 실제 결과 |
+| --- | --- |
+| `pnpm install --frozen-lockfile` | PASS — Node 24.14.1, 실행 pnpm 11.25.0. packageManager 선언은 11.9.0, lockfile 변경 없음 |
+| `pnpm lint` | PASS — warning 0 |
+| `pnpm typecheck` | PASS |
+| `pnpm test` | PASS — 50 files, 210/210 |
+| `pnpm check` | PASS — lint/typecheck/test와 Pages/custom 빌드를 순서대로 실행 |
+| `pnpm build:pages` | PASS — 645 checks, sitemap 28 URL, OG 24개 |
+| `pnpm build:custom:test` | PASS — 646 checks, 테스트 도메인 기준 root export |
+| `pnpm build` | PASS — pixelfit.me custom, 646 checks |
+| `pnpm verify:export` | PASS — custom 646 checks |
+| `pnpm verify:assets` | PASS — sample 22개·압축 thumbnail 4개, OG 24개. 생성/자산 diff 없음 |
+| `pnpm test:e2e` | PASS — 52 passed, 의도된 mobile 중복 검사 2 skipped. 기존 처리/다운로드와 실제 측정 재현 포함 |
+| `pnpm test:a11y` | PASS — 4/4. 공개 28페이지 초기 상태와 대표 편집/결과 상태, Chromium/WebKit axe serious/critical 0 |
+| 모바일 렌더링 | PASS — 수정본 28페이지 390×844, 초기화 실패/지속 로딩/console·page 오류/실패 요청/뷰포트 확대/미로딩 이미지/주요 정적 헤딩 누락 0 |
+| JS OFF | PASS — 홈과 우선 5페이지의 본문/표/링크를 확인. 도구의 JS 필요 안내 표시 |
+| 브라우저 개인정보 가드 | PASS — 검사 흐름에서 원본/결과 외부 전송·파일 저장소 복사·파일 표식 유출 없음 |
+| 공개 배포·호스팅 CI | NOT_TESTED — 로컬 수정본을 배포하지 않음 |
+| GSC·AdSense 계정·실사용 CWV·실기기 Safari·실제 여권 접수·광고/CMP | NOT_TESTED — 공개 HTTP/자동 브라우저/실험실 결과와 구분 |
+
+중간 실패는 고치거나 검증 범위를 명확히 했다. WebKit의 100KB 결과를 모든 브라우저에서 강제하는 테스트 가정을 수정했고, 모바일 퍼센트 버튼의 실제 잘림, 가이드의 너비 확대와 Safari 표 포커스 결함을 고쳤다. 방향키는 WebKit의 기본 스크롤에 필요한 실제 키 눌림 시간을 반영해 검증했다. 기준선부터 있던 webpack Worker circular-dependency 경고는 남아 있으나 기능/빌드 검사를 통과했다.
+
+Lighthouse 13.0.1 모바일 최종 검사: 로컬 우선 6페이지 Performance 98~99, LCP 2050~2350ms, A11y/BP/SEO 모두 100, CLS 모두 0. 공개 대표 2페이지도 별도 측정했다. 공개 홈의 캐시 초기화 timeout 경고 1건을 기록했고, 환경이 달라 전후 점수의 인과 개선으로 주장하지 않는다. 실제 INP/CrUX/CWV는 NOT_TESTED다. 전체 수치는 감사 보고서 부록 B와 output/seo-2026-10-12/lighthouse JSON에 있다.
+
+상세 심각도 표, 23페이지 콘텐츠 판단, 28 URL metadata 목록, 변경 파일, 원본 실측, GSC 확인 사항과 재심사 위험은 [감사 보고서](./SEO_ADSENSE_AUDIT_2026-10-12.md)에 있다. 실제 로그·다운로드·JSON·스크린샷은 `output/seo-2026-10-12/`에 보존했다. 승인 가능성을 보장하지 않는다.
 
 ## 인스타그램 프로필 사진 릴리스 — 2026-07-30, `DEPLOYED`
 

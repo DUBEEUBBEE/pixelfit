@@ -1,6 +1,12 @@
 # AdSense readiness
 
-Last verified: 2026-07-26
+Latest read-only repository/public-site audit: 2026-10-12. The historical account and operator records below were not reverified in the account.
+
+## 2026-10-12 worktree audit
+
+The user reports an AdSense low-value-content rejection. This run did not open or change the account, request review, deploy, or enable ads. Public HTTP/HTML checks found 28 accessible canonical pages, a matching publisher account meta and root ads.txt, and no ad runtime. These checks do not establish ownership or approval. See [the audit report](./SEO_ADSENSE_AUDIT_2026-10-12.md) for content changes, actual engine measurements, tests, and remaining operator checks.
+
+Google's [European regulations/CMP guidance](https://support.google.com/adsense/answer/13554116?hl=ko) was read on 2026-10-12. Before serving ads to EEA, UK, or Swiss users, configure and test the applicable certified CMP/TCF consent flow. Ads remain OFF; this audit does not claim consent compliance or identify the missing CMP as the cause of the reported content rejection.
 
 AdSense ad serving is disabled by default. This repository separates account-identification surfaces from the ad-serving gate; neither path claims account approval, site approval, active ad serving, consent compliance, or revenue readiness.
 
