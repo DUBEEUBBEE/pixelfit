@@ -6,7 +6,7 @@ import { tools } from "@/config/tools";
 export const dynamic = "force-static";
 
 const staticRoutes = [
-  { path: "/", updatedAt: "2026-07-26" },
+  { path: "/", updatedAt: "2026-10-12" },
   { path: "/about", updatedAt: "2026-07-26" },
   { path: "/contact", updatedAt: "2026-07-26" },
   { path: "/privacy", updatedAt: "2026-07-26" },

@@ -20,7 +20,7 @@ describe("static SEO routes", () => {
       path: new URL(entry.url).pathname,
       lastModified: entry.lastModified,
     }))).toEqual([
-      { path: "/", lastModified: "2026-07-26" },
+      { path: "/", lastModified: "2026-10-12" },
       { path: "/about/", lastModified: "2026-07-26" },
       { path: "/contact/", lastModified: "2026-07-26" },
       { path: "/privacy/", lastModified: "2026-07-26" },
