@@ -10,6 +10,7 @@ import { isOfficialBadge, toolBadgeCopy } from "@/config/tool-badges";
 import { getTool, tools } from "@/config/tools";
 import { AdSlot } from "@/components/ads";
 import { SampleGallery } from "@/components/content/SampleGallery";
+import { ProcessingEvidence } from "@/components/content/ProcessingEvidence";
 import { getPreset } from "@/lib/presets";
 
 type Props = { params: Promise<{ tool: string }> };
@@ -81,6 +82,7 @@ export default async function ToolPage({ params }: Props) {
       </header>
 
       <div className="site-shell"><ToolWorkspace presetId={tool.id} workspaceKind={tool.workspaceKind} photoPreset={photoPreset} /></div>
+      <noscript><p className="site-shell info-box">이미지 편집에는 JavaScript가 필요합니다. 브라우저에서 JavaScript를 켠 뒤 새로고침해 주세요. 아래 사용 방법과 규격 설명은 그대로 읽을 수 있습니다.</p></noscript>
 
       <div className="section site-shell"><SampleGallery toolId={tool.id} /></div>
 
@@ -97,6 +99,8 @@ export default async function ToolPage({ params }: Props) {
         <div className="section-heading"><span className="eyebrow">세 단계</span><h2 id="how-to-heading">{tool.title} 사용 방법</h2></div>
         <ol className="numbered-cards">{tool.content.howTo.map((step) => <li key={step}>{step}</li>)}</ol>
       </section>
+
+      {["image-compressor", "image-resizer", "passport-photo", "photo-privacy-cleaner"].includes(tool.id) && <div className="section site-shell"><ProcessingEvidence context={tool.id} /></div>}
 
       <section className="section site-shell" aria-labelledby="mistakes-heading">
         <div className="tool-info"><div><span className="eyebrow">흔한 문제</span><h2 id="mistakes-heading">결과를 쓰기 전에 다시 볼 것</h2></div><div className="stacked-sections">{tool.content.commonMistakes.map((section) => <article key={section.title}><h3>{section.title}</h3><p>{section.body}</p></article>)}<article><h3>자동 확인 범위와 한계</h3><ul className="limitation-list">{tool.content.limitations.map((limitation) => <li key={limitation}>{limitation}</li>)}</ul></article></div></div>
